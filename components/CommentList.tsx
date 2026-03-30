@@ -1,6 +1,7 @@
 // components/CommentList.tsx
 import Avatar from './Avatar'
 import CommentRenderer from './CommentRenderer'
+import Link from 'next/link'
 
 interface Comment {
   id: string
@@ -36,9 +37,13 @@ export default function CommentList({ comments }: { comments: Comment[] }) {
               username={comment.profiles?.username || null}
               size={24}
             />
-            <span className="text-xs font-bold" style={{ color: '#e05565' }}>
+            <Link
+              href={`/profile/${comment.profiles?.username}`}
+              className="text-xs font-bold hover:underline"
+              style={{ color: '#e05565' }}
+            >
               {comment.profiles?.username || 'Unknown'}
-            </span>
+            </Link>
             <span className="text-xs" style={{ color: '#555' }}>
               {new Date(comment.created_at).toLocaleString()}
             </span>
