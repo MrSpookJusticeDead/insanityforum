@@ -12,6 +12,24 @@ interface CommentRendererProps {
 function CommentImage({ src, alt }: { src: string; alt: string }) {
   const [error, setError] = useState(false)
 
+  const sizeMatch = alt.match(/=(\d+)(?:x(\d+))?$/)
+  const cleanAlt = alt.replace(/\s*=\d+(?:x\d+)?$/, '')
+
+  let maxWidth = 500
+  let maxHeight: number | undefined = undefined
+
+  if (sizeMatch) {
+    maxWidth = parseInt(sizeMatch[1], 10)
+    if (sizeMatch[2]) {
+      maxHeight = parseInt(sizeMatch[2], 10)
+    }
+  }
+
+  maxWidth = Math.min(maxWidth, 500)
+  if (maxHeight) {
+    maxHeight = Math.min(maxHeight, 400)
+  }
+
   if (error) {
     return (
       <span className="text-xs" style={{ color: '#e05565' }}>
@@ -20,18 +38,23 @@ function CommentImage({ src, alt }: { src: string; alt: string }) {
     )
   }
 
+  const style: React.CSSProperties = {
+    maxWidth: `${maxWidth}px`,
+    maxHeight: maxHeight ? `${maxHeight}px` : 'none',
+    width: '100%',
+    height: 'auto',
+    border: '1px solid #2a2a2a',
+  }
+
   return (
     <span className="block my-2">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
-        alt={alt || 'image'}
+        alt={cleanAlt || 'image'}
         onError={() => setError(true)}
         className="max-w-full"
-        style={{
-          maxHeight: '400px',
-          border: '1px solid #2a2a2a',
-        }}
+        style={style}
       />
     </span>
   )
@@ -55,7 +78,6 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 }
 
 export default function CommentRenderer({ content }: CommentRendererProps) {
-  // Handle audio tags
   const processedContent = content.replace(
     /\[audio:([^\]]*)\]\(([^)]+)\)/g,
     '%%%AUDIO|||$1|||$2%%%'
@@ -82,61 +104,36 @@ export default function CommentRenderer({ content }: CommentRendererProps) {
             key={index}
             remarkPlugins={[remarkGfm]}
             components={{
-              // NO headings — just render as bold paragraph
               h1: ({ children }) => (
-                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>
-                  {children}
-                </p>
+                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>{children}</p>
               ),
               h2: ({ children }) => (
-                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>
-                  {children}
-                </p>
+                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>{children}</p>
               ),
               h3: ({ children }) => (
-                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>
-                  {children}
-                </p>
+                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>{children}</p>
               ),
               h4: ({ children }) => (
-                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>
-                  {children}
-                </p>
+                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>{children}</p>
               ),
               h5: ({ children }) => (
-                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>
-                  {children}
-                </p>
+                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>{children}</p>
               ),
               h6: ({ children }) => (
-                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>
-                  {children}
-                </p>
+                <p className="font-bold my-1" style={{ color: '#e0e0e0' }}>{children}</p>
               ),
-
-              // Paragraph
               p: ({ children }) => (
-                <p className="my-1 leading-relaxed" style={{ color: '#ccc' }}>
-                  {children}
-                </p>
+                <p className="my-1 leading-relaxed" style={{ color: '#ccc' }}>{children}</p>
               ),
-
-              // Bold
               strong: ({ children }) => (
                 <strong style={{ color: '#e0e0e0' }}>{children}</strong>
               ),
-
-              // Italic
               em: ({ children }) => (
                 <em style={{ color: '#ccc' }}>{children}</em>
               ),
-
-              // Strikethrough
               del: ({ children }) => (
                 <del style={{ color: '#888' }}>{children}</del>
               ),
-
-              // Inline code
               code: ({ children }) => (
                 <code
                   className="px-1 py-0.5 text-xs"
@@ -150,8 +147,6 @@ export default function CommentRenderer({ content }: CommentRendererProps) {
                   {children}
                 </code>
               ),
-
-              // No code blocks in comments — render as inline
               pre: ({ children }) => (
                 <span
                   className="block px-2 py-1 my-1 text-xs overflow-x-auto"
@@ -165,8 +160,6 @@ export default function CommentRenderer({ content }: CommentRendererProps) {
                   {children}
                 </span>
               ),
-
-              // Links
               a: ({ href, children }) => (
                 <a
                   href={href || '#'}
@@ -178,51 +171,32 @@ export default function CommentRenderer({ content }: CommentRendererProps) {
                   {children}
                 </a>
               ),
-
-              // Images
               img: ({ src: imgSrc, alt: imgAlt }) => (
                 <CommentImage
                   src={(imgSrc as string) || ''}
                   alt={(imgAlt as string) || ''}
                 />
               ),
-
-              // No blockquotes — keep it simple
               blockquote: ({ children }) => (
                 <span
                   className="block pl-3 my-1 italic"
-                  style={{
-                    borderLeft: '2px solid #2a2a2a',
-                    color: '#888',
-                  }}
+                  style={{ borderLeft: '2px solid #2a2a2a', color: '#888' }}
                 >
                   {children}
                 </span>
               ),
-
-              // Lists — keep them
               ul: ({ children }) => (
-                <ul className="my-1 pl-4 list-disc" style={{ color: '#ccc' }}>
-                  {children}
-                </ul>
+                <ul className="my-1 pl-4 list-disc" style={{ color: '#ccc' }}>{children}</ul>
               ),
               ol: ({ children }) => (
-                <ol className="my-1 pl-4 list-decimal" style={{ color: '#ccc' }}>
-                  {children}
-                </ol>
+                <ol className="my-1 pl-4 list-decimal" style={{ color: '#ccc' }}>{children}</ol>
               ),
               li: ({ children }) => (
                 <li className="my-0.5">{children}</li>
               ),
-
-              // No tables in comments
               table: ({ children }) => (
-                <span className="text-xs" style={{ color: '#555' }}>
-                  {children}
-                </span>
+                <span className="text-xs" style={{ color: '#555' }}>{children}</span>
               ),
-
-              // No horizontal rule
               hr: () => (
                 <span className="block border-t my-2" style={{ borderColor: '#2a2a2a' }} />
               ),

@@ -233,7 +233,19 @@ export default function CommentEditor({ value, onChange, placeholder }: CommentE
         {/* Image from URL */}
         <button
           type="button"
-          onClick={() => insertAtCursor('\n![alt](image-url)\n')}
+          onClick={() => {
+            const url = prompt('Enter image URL:')
+            if (url) {
+              const size = prompt(
+                'Enter image size (e.g., 200x150 or just 200).\nLeave empty for default (max 500px).',
+                '400'
+              )
+              if (size !== null) {
+                const sizeAttr = size.trim() ? ` =${size.trim()}` : ''
+                insertAtCursor(`\n![image](${url}${sizeAttr})\n`)
+              }
+            }
+          }}
           className="px-2 py-1 text-xs border hover:bg-gray-800 transition-colors"
           style={btnStyle}
           title="Image from URL"

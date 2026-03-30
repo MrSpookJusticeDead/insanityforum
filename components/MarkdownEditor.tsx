@@ -18,15 +18,14 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
   const audioInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
-  // Insert text at cursor position
-  const insertAtCursor = (before: string, after: string = '', placeholder: string = '') => {
+  const insertAtCursor = (before: string, after: string = '', insertPlaceholder: string = '') => {
     const textarea = textareaRef.current
     if (!textarea) return
 
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const selectedText = value.substring(start, end)
-    const textToInsert = selectedText || placeholder
+    const textToInsert = selectedText || insertPlaceholder
 
     const newValue =
       value.substring(0, start) +
@@ -37,7 +36,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
 
     onChange(newValue)
 
-    // Set cursor position after insert
     setTimeout(() => {
       textarea.focus()
       const cursorPos = start + before.length + textToInsert.length
@@ -45,8 +43,7 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
     }, 0)
   }
 
-  // Wrap selected text
-  const wrapSelection = (before: string, after: string, placeholder: string = 'text') => {
+  const wrapSelection = (before: string, after: string, wrapPlaceholder: string = 'text') => {
     const textarea = textareaRef.current
     if (!textarea) return
 
@@ -71,12 +68,12 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
         )
       }, 0)
     } else {
-      insertAtCursor(before, after, placeholder)
+      insertAtCursor(before, after, wrapPlaceholder)
     }
   }
 
-  // Upload file to Supabase Storage
-  const uploadFile = async (file: File, type: 'image' | 'audio'): Promise<string | null> => {
+  // Upload file to Supabase Storage (removed unused 'type' parameter)
+  const uploadFile = async (file: File): Promise<string | null> => {
     setUploading(true)
     setUploadError(null)
 
@@ -88,7 +85,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
         return null
       }
 
-      // Validate file size (10MB max)
       if (file.size > 10 * 1024 * 1024) {
         setUploadError('File must be less than 10MB')
         setUploading(false)
@@ -99,15 +95,15 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
       const filePath = `${user.id}/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadErr } = await supabase.storage
         .from('post-media')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
         })
 
-      if (uploadError) {
-        setUploadError(uploadError.message)
+      if (uploadErr) {
+        setUploadError(uploadErr.message)
         setUploading(false)
         return null
       }
@@ -118,14 +114,13 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
 
       setUploading(false)
       return publicUrl
-    } catch (err) {
+    } catch {
       setUploadError('Upload failed')
       setUploading(false)
       return null
     }
   }
 
-  // Handle image/gif upload
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -136,16 +131,22 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
       return
     }
 
-    const url = await uploadFile(file, 'image')
+    const url = await uploadFile(file)
     if (url) {
-      insertAtCursor(`\n![${file.name}](${url})\n`, '', '')
+      const size = prompt(
+        'Enter image size (e.g., 300x200 or just 300 for width).\nLeave empty for full size (max 800px).',
+        '800'
+      )
+
+      if (size !== null) {
+        const sizeAttr = size.trim() ? ` =${size.trim()}` : ''
+        insertAtCursor(`\n![${file.name}](${url}${sizeAttr})\n`, '', '')
+      }
     }
 
-    // Reset input
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  // Handle audio upload
   const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -156,16 +157,14 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
       return
     }
 
-    const url = await uploadFile(file, 'audio')
+    const url = await uploadFile(file)
     if (url) {
       insertAtCursor(`\n[audio:${file.name}](${url})\n`, '', '')
     }
 
-    // Reset input
     if (audioInputRef.current) audioInputRef.current.value = ''
   }
 
-  // Toolbar button style
   const btnStyle = {
     color: '#888',
     borderColor: '#2a2a2a',
@@ -173,12 +172,10 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
 
   return (
     <div>
-      {/* Toolbar */}
       <div
         className="flex flex-wrap items-center gap-1 p-2 border-b"
         style={{ backgroundColor: '#1a1a1a', borderColor: '#2a2a2a' }}
       >
-        {/* Headings */}
         <button
           type="button"
           onClick={() => insertAtCursor('\n# ', '\n', 'Heading')}
@@ -209,7 +206,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
 
         <span className="mx-1" style={{ color: '#2a2a2a' }}>|</span>
 
-        {/* Text formatting */}
         <button
           type="button"
           onClick={() => wrapSelection('**', '**', 'bold')}
@@ -249,7 +245,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
 
         <span className="mx-1" style={{ color: '#2a2a2a' }}>|</span>
 
-        {/* Code block */}
         <button
           type="button"
           onClick={() => insertAtCursor('\n```\n', '\n```\n', 'code here')}
@@ -259,8 +254,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
         >
           Code
         </button>
-
-        {/* Quote */}
         <button
           type="button"
           onClick={() => insertAtCursor('\n> ', '\n', 'quote')}
@@ -270,8 +263,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
         >
           Quote
         </button>
-
-        {/* List */}
         <button
           type="button"
           onClick={() => insertAtCursor('\n- ', '\n', 'item')}
@@ -281,8 +272,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
         >
           List
         </button>
-
-        {/* Link */}
         <button
           type="button"
           onClick={() => wrapSelection('[', '](url)', 'link text')}
@@ -295,7 +284,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
 
         <span className="mx-1" style={{ color: '#2a2a2a' }}>|</span>
 
-        {/* Divider */}
         <button
           type="button"
           onClick={() => insertAtCursor('\n---\n', '', '')}
@@ -308,7 +296,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
 
         <span className="mx-1" style={{ color: '#2a2a2a' }}>|</span>
 
-        {/* Image upload */}
         <label
           className="px-2 py-1 text-xs border cursor-pointer hover:bg-gray-800 transition-colors"
           style={{ ...btnStyle, color: '#5ec269', borderColor: '#5ec269' }}
@@ -325,10 +312,21 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
           />
         </label>
 
-        {/* Image URL */}
         <button
           type="button"
-          onClick={() => insertAtCursor('\n![alt text](', ')\n', 'image-url')}
+          onClick={() => {
+            const url = prompt('Enter image URL:')
+            if (url) {
+              const size = prompt(
+                'Enter image size (e.g., 300x200 or just 300).\nLeave empty for full size (max 800px).',
+                '800'
+              )
+              if (size !== null) {
+                const sizeAttr = size.trim() ? ` =${size.trim()}` : ''
+                insertAtCursor(`\n![image](${url}${sizeAttr})\n`, '', '')
+              }
+            }
+          }}
           className="px-2 py-1 text-xs border hover:bg-gray-800 transition-colors"
           style={btnStyle}
           title="Image from URL"
@@ -336,7 +334,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
           ImgURL
         </button>
 
-        {/* Audio upload */}
         <label
           className="px-2 py-1 text-xs border cursor-pointer hover:bg-gray-800 transition-colors"
           style={{ ...btnStyle, color: '#e0a550', borderColor: '#e0a550' }}
@@ -354,7 +351,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
         </label>
       </div>
 
-      {/* Upload error */}
       {uploadError && (
         <div
           className="text-xs px-2 py-1"
@@ -364,7 +360,6 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
         </div>
       )}
 
-      {/* Textarea */}
       <textarea
         ref={textareaRef}
         value={value}
@@ -382,10 +377,9 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
         }}
       />
 
-      {/* Help text */}
       <div className="flex items-center gap-4 mt-2">
         <span className="text-xs" style={{ color: '#555' }}>
-          Markdown supported: **bold** *italic* # heading [link](url) ![image](url)
+          Markdown supported: **bold** *italic* # heading [link](url) ![image](url =size)
         </span>
       </div>
     </div>
