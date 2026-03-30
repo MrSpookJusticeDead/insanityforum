@@ -7,8 +7,8 @@ import Navbar from '@/components/Navbar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Forum App',
-  description: 'A community forum built with Next.js and Supabase',
+  title: 'Insanity Forum',
+  description: 'A vibrant community forum',
 }
 
 export default function RootLayout({
@@ -19,10 +19,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Navbar />
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {children}
-        </main>
+        <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+          <Navbar />
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="animate-fade-in">
+              {children}
+            </div>
+          </main>
+        </div>
       </body>
     </html>
   )
