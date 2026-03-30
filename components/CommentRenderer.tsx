@@ -70,7 +70,7 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
       <p className="text-xs mb-1" style={{ color: '#e0a550' }}>
         🎵 {title}
       </p>
-      <audio controls className="w-full" style={{ height: '34px' , width: '55%' }}>
+      <audio controls className="w-full" style={{ height: '37px' , width: '56%' }}>
         <source src={src} />
         Your browser does not support audio.
       </audio>
