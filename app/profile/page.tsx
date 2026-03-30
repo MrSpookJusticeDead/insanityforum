@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Avatar from '@/components/Avatar'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -9,14 +10,12 @@ export default async function ProfilePage() {
 
   if (!user) redirect('/login')
 
-  // Get profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
-  // Get user's posts
   const { data: posts } = await supabase
     .from('posts')
     .select(`
@@ -27,7 +26,6 @@ export default async function ProfilePage() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
-  // Get user's comments count
   const { count: commentCount } = await supabase
     .from('comments')
     .select('*', { count: 'exact', head: true })
@@ -38,16 +36,11 @@ export default async function ProfilePage() {
       {/* Profile Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div
-            className="w-16 h-16 flex items-center justify-center text-2xl font-bold"
-            style={{
-              backgroundColor: '#1a1a1a',
-              border: '1px solid #2a2a2a',
-              color: '#e05565',
-            }}
-          >
-            {profile?.username?.charAt(0).toUpperCase() || '?'}
-          </div>
+          <Avatar
+            url={profile?.avatar_url}
+            username={profile?.username}
+            size={64}
+          />
           <div>
             <h1 className="text-xl font-bold" style={{ color: '#e0e0e0' }}>
               {profile?.username || 'Unknown'}
@@ -80,19 +73,13 @@ export default async function ProfilePage() {
 
       {/* Stats */}
       <div className="flex items-center gap-6 mb-6">
-        <div
-          className="border px-4 py-2"
-          style={{ borderColor: '#2a2a2a' }}
-        >
+        <div className="border px-4 py-2" style={{ borderColor: '#2a2a2a' }}>
           <span className="text-sm font-bold" style={{ color: '#e0e0e0' }}>
             {posts?.length || 0}
           </span>
           <span className="text-xs ml-1" style={{ color: '#888' }}>posts</span>
         </div>
-        <div
-          className="border px-4 py-2"
-          style={{ borderColor: '#2a2a2a' }}
-        >
+        <div className="border px-4 py-2" style={{ borderColor: '#2a2a2a' }}>
           <span className="text-sm font-bold" style={{ color: '#e0e0e0' }}>
             {commentCount || 0}
           </span>
@@ -102,7 +89,6 @@ export default async function ProfilePage() {
 
       <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
 
-      {/* User's Posts */}
       <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e0e0e0' }}>
         Posts
       </h2>

@@ -1,4 +1,6 @@
 // components/CommentList.tsx
+import Avatar from './Avatar'
+
 interface Comment {
   id: string
   content: string
@@ -27,16 +29,11 @@ export default function CommentList({ comments }: { comments: Comment[] }) {
           style={{ borderColor: '#2a2a2a' }}
         >
           <div className="flex items-center gap-3 mb-2">
-            <div
-              className="w-6 h-6 flex items-center justify-center text-xs font-bold"
-              style={{
-                backgroundColor: '#1a1a1a',
-                border: '1px solid #2a2a2a',
-                color: '#e05565',
-              }}
-            >
-              {comment.profiles?.username?.charAt(0).toUpperCase() || '?'}
-            </div>
+            <Avatar
+              url={comment.profiles?.avatar_url || null}
+              username={comment.profiles?.username || null}
+              size={24}
+            />
             <span className="text-xs font-bold" style={{ color: '#e05565' }}>
               {comment.profiles?.username || 'Unknown'}
             </span>

@@ -5,14 +5,17 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import AvatarUpload from '@/components/AvatarUpload'
 
 export default function SettingsPage() {
   const [username, setUsername] = useState('')
   const [bio, setBio] = useState('')
-  const [currentPassword, setCurrentPassword] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string>('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [pageLoading, setPageLoading] = useState(true)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
@@ -25,6 +28,8 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      setUserId(user.id)
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -34,7 +39,9 @@ export default function SettingsPage() {
       if (profile) {
         setUsername(profile.username || '')
         setBio(profile.bio || '')
+        setAvatarUrl(profile.avatar_url || null)
       }
+      setPageLoading(false)
     }
     loadProfile()
   }, [])
@@ -91,7 +98,6 @@ export default function SettingsPage() {
       setError(error.message)
     } else {
       setMessage('Password updated successfully')
-      setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
     }
@@ -106,6 +112,16 @@ export default function SettingsPage() {
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
+    // Delete avatar from storage
+    const { data: existingFiles } = await supabase.storage
+      .from('avatars')
+      .list(user.id)
+
+    if (existingFiles && existingFiles.length > 0) {
+      const filesToDelete = existingFiles.map(f => `${user.id}/${f.name}`)
+      await supabase.storage.from('avatars').remove(filesToDelete)
+    }
 
     // Delete user's comments
     await supabase
@@ -130,6 +146,14 @@ export default function SettingsPage() {
 
     router.push('/')
     router.refresh()
+  }
+
+  if (pageLoading) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <p className="text-sm" style={{ color: '#888' }}>Loading...</p>
+      </div>
+    )
   }
 
   return (
@@ -164,6 +188,21 @@ export default function SettingsPage() {
           {error}
         </div>
       )}
+
+      {/* ===== AVATAR SECTION ===== */}
+      <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
+
+      <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e0e0e0' }}>
+        Avatar
+      </h2>
+
+      <div className="mb-8">
+        <AvatarUpload
+          currentUrl={avatarUrl}
+          userId={userId}
+          username={username}
+        />
+      </div>
 
       {/* ===== PROFILE SECTION ===== */}
       <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
@@ -290,7 +329,7 @@ export default function SettingsPage() {
           style={{ borderColor: '#e05565' }}
         >
           <p className="text-xs" style={{ color: '#e05565' }}>
-            This action is irreversible. All your posts and comments will be deleted.
+            This action is irreversible. All your posts, comments, and data will be deleted.
           </p>
           <p className="text-xs" style={{ color: '#888' }}>
             Type <strong style={{ color: '#e05565' }}>DELETE</strong> to confirm:

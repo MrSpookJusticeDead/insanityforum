@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Avatar from '@/components/Avatar'
 
 export default async function PublicProfilePage({
   params,
@@ -11,7 +12,6 @@ export default async function PublicProfilePage({
   const supabase = await createClient()
   const { username } = await params
 
-  // Get profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
@@ -20,7 +20,6 @@ export default async function PublicProfilePage({
 
   if (!profile) notFound()
 
-  // Get user's posts
   const { data: posts } = await supabase
     .from('posts')
     .select(`
@@ -31,19 +30,16 @@ export default async function PublicProfilePage({
     .eq('user_id', profile.id)
     .order('created_at', { ascending: false })
 
-  // Get user's comments count
   const { count: commentCount } = await supabase
     .from('comments')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', profile.id)
 
-  // Check if viewing own profile
   const { data: { user } } = await supabase.auth.getUser()
   const isOwnProfile = user?.id === profile.id
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Back link */}
       <Link
         href="/"
         className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
@@ -55,16 +51,11 @@ export default async function PublicProfilePage({
       {/* Profile Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div
-            className="w-16 h-16 flex items-center justify-center text-2xl font-bold"
-            style={{
-              backgroundColor: '#1a1a1a',
-              border: '1px solid #2a2a2a',
-              color: '#e05565',
-            }}
-          >
-            {profile.username?.charAt(0).toUpperCase() || '?'}
-          </div>
+          <Avatar
+            url={profile.avatar_url}
+            username={profile.username}
+            size={64}
+          />
           <div>
             <h1 className="text-xl font-bold" style={{ color: '#e0e0e0' }}>
               {profile.username}
@@ -85,7 +76,6 @@ export default async function PublicProfilePage({
         )}
       </div>
 
-      {/* Bio */}
       {profile.bio && (
         <div className="mb-6">
           <p className="text-sm" style={{ color: '#ccc' }}>
@@ -94,7 +84,6 @@ export default async function PublicProfilePage({
         </div>
       )}
 
-      {/* Stats */}
       <div className="flex items-center gap-6 mb-6">
         <div className="border px-4 py-2" style={{ borderColor: '#2a2a2a' }}>
           <span className="text-sm font-bold" style={{ color: '#e0e0e0' }}>
@@ -112,7 +101,6 @@ export default async function PublicProfilePage({
 
       <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
 
-      {/* Posts */}
       <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e0e0e0' }}>
         Posts by {profile.username}
       </h2>

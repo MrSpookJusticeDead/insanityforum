@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import LogoutButton from './LogoutButton'
+import Avatar from './Avatar'
 
 export default async function Navbar() {
   const supabase = await createClient()
@@ -11,7 +12,7 @@ export default async function Navbar() {
   if (user) {
     const { data } = await supabase
       .from('profiles')
-      .select('username')
+      .select('username, avatar_url')
       .eq('id', user.id)
       .single()
     profile = data
@@ -56,12 +57,18 @@ export default async function Navbar() {
                   className="flex items-center gap-2 border px-3 py-1.5"
                   style={{ borderColor: '#2a2a2a' }}
                 >
-                  <Link
-                    href="/profile"
-                    className="text-xs uppercase tracking-wide hover:underline"
-                    style={{ color: '#e0e0e0' }}
-                  >
-                    {profile?.username || user.email}
+                  <Link href="/profile" className="flex items-center gap-2">
+                    <Avatar
+                      url={profile?.avatar_url}
+                      username={profile?.username}
+                      size={24}
+                    />
+                    <span
+                      className="text-xs uppercase tracking-wide hover:underline"
+                      style={{ color: '#e0e0e0' }}
+                    >
+                      {profile?.username || user.email}
+                    </span>
                   </Link>
                   <span style={{ color: '#2a2a2a' }}>|</span>
                   <Link

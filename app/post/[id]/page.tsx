@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import CommentForm from '@/components/CommentForm'
 import CommentList from '@/components/CommentList'
+import Avatar from '@/components/Avatar'
 import Link from 'next/link'
 
 export default async function PostPage({
@@ -41,7 +42,6 @@ export default async function PostPage({
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Back link */}
       <Link
         href="/"
         className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
@@ -50,7 +50,6 @@ export default async function PostPage({
         ← Back to posts
       </Link>
 
-      {/* Post */}
       <article>
         <div className="flex items-center justify-between mb-4">
           <Link
@@ -62,15 +61,13 @@ export default async function PostPage({
           </Link>
 
           {isOwner && (
-            <div className="flex items-center gap-3">
-              <Link
-                href={`/edit-post/${post.id}`}
-                className="text-xs uppercase tracking-widest hover:underline"
-                style={{ color: '#e05565' }}
-              >
-                Edit
-              </Link>
-            </div>
+            <Link
+              href={`/edit-post/${post.id}`}
+              className="text-xs uppercase tracking-widest hover:underline"
+              style={{ color: '#e05565' }}
+            >
+              Edit
+            </Link>
           )}
         </div>
 
@@ -78,8 +75,13 @@ export default async function PostPage({
           {post.title}
         </h1>
 
-        <div className="flex items-center gap-2 text-xs mb-6" style={{ color: '#888' }}>
-          <span>
+        <div className="flex items-center gap-3 text-xs mb-6">
+          <Avatar
+            url={post.profiles?.avatar_url}
+            username={post.profiles?.username}
+            size={24}
+          />
+          <span style={{ color: '#888' }}>
             posted by{' '}
             <Link
               href={`/profile/${post.profiles?.username}`}
@@ -113,7 +115,6 @@ export default async function PostPage({
 
       <hr style={{ borderColor: '#2a2a2a' }} className="my-8" />
 
-      {/* Comments Section */}
       <div>
         <h2 className="text-sm font-bold uppercase tracking-widest mb-6" style={{ color: '#e0e0e0' }}>
           Comments ({comments?.length || 0})
