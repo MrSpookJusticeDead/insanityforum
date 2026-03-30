@@ -29,61 +29,56 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 
 // Custom image with error handling
 function MarkdownImage({ src, alt }: { src: string; alt: string }) {
-  const [error, setError] = useState(false)
-  
-  // Parse size from alt text: "filename =300x200" or "filename =300"
-  const sizeMatch = alt.match(/=(\d+)(?:x(\d+))?$/)
-  const cleanAlt = alt.replace(/\s*=\d+(?:x\d+)?$/, '')
-  
-  let maxWidth = 250 // Default max for posts
-  let maxHeight: number | undefined = undefined
-  
-  if (sizeMatch) {
-    maxWidth = parseInt(sizeMatch[1], 10)
-    if (sizeMatch[2]) {
-      maxHeight = parseInt(sizeMatch[2], 10)
+    const [error, setError] = useState(false)
+
+    // Parse size from alt text: "filename =300x200" or "filename =300"
+    const sizeMatch = alt.match(/=(\d+)(?:x(\d+))?$/)
+    const cleanAlt = alt.replace(/\s*=\d+(?:x\d+)?$/, '')
+
+    let maxWidth = 800 // Default max for posts (no size = full width up to 800)
+    let maxHeight: number | undefined = undefined
+
+    if (sizeMatch) {
+        maxWidth = parseInt(sizeMatch[1], 10)
+        if (sizeMatch[2]) {
+            maxHeight = parseInt(sizeMatch[2], 10)
+        }
     }
-  }
-  
-  // Enforce max limits
-  maxWidth = Math.min(maxWidth, 800)
-  if (maxHeight) {
-    maxHeight = Math.min(maxHeight, 600)
-  }
 
-  if (error) {
+    // Enforce max limits
+    maxWidth = Math.min(maxWidth, 800)
+    if (maxHeight) {
+        maxHeight = Math.min(maxHeight, 600)
+    }
+
+    if (error) {
+        return (
+            <span className="text-xs" style={{ color: '#e05565' }}>
+                [Image failed to load: {cleanAlt}]
+            </span>
+        )
+    }
+
+    const style: React.CSSProperties = {
+        maxWidth: `${maxWidth}px`,
+        maxHeight: maxHeight ? `${maxHeight}px` : 'none',
+        width: '100%',
+        height: 'auto',
+        border: '1px solid #2a2a2a',
+    }
+
     return (
-      <span className="text-xs" style={{ color: '#e05565' }}>
-        [Image failed to load: {cleanAlt}]
-      </span>
+        <span className="block my-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+                src={src}
+                alt={cleanAlt || 'image'}
+                onError={() => setError(true)}
+                className="max-w-full rounded"
+                style={style}
+            />
+        </span>
     )
-  }
-
-  const style: React.CSSProperties = {
-    maxWidth: `${maxWidth}px`,
-    maxHeight: maxHeight ? `${maxHeight}px` : 'none',
-    width: '100%',
-    height: 'auto',
-    border: '1px solid #2a2a2a',
-  }
-
-  return (
-    <span className="block my-3">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={cleanAlt || 'image'}
-        onError={() => setError(true)}
-        className="max-w-full rounded"
-        style={style}
-      />
-      {sizeMatch && (
-        <p className="text-xs mt-1" style={{ color: '#555' }}>
-          📐 {maxWidth}{maxHeight ? `×${maxHeight}` : ''} px
-        </p>
-      )}
-    </span>
-  )
 }
 
 export default function MarkdownRenderer({ content }: MarkdownRendererProps) {

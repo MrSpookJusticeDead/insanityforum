@@ -118,7 +118,7 @@ export default function CommentEditor({ value, onChange, placeholder }: CommentE
 
     const url = await uploadFile(file)
     if (url) {
-      insertAtCursor(`\n![${file.name}](${url})\n`)
+      insertAtCursor(`\n![${file.name} =300](${url})\n`)
     }
 
     if (fileInputRef.current) fileInputRef.current.value = ''
@@ -241,8 +241,8 @@ export default function CommentEditor({ value, onChange, placeholder }: CommentE
                 '400'
               )
               if (size !== null) {
-                const sizeAttr = size.trim() ? ` =${size.trim()}` : ''
-                insertAtCursor(`\n![image](${url}${sizeAttr})\n`)
+                const altText = size.trim() ? `image =${size.trim()}` : 'image'
+                insertAtCursor(`\n![${altText}](${url})\n`)
               }
             }
           }}

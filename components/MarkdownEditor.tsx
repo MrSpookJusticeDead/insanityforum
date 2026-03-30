@@ -121,6 +121,7 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
     }
   }
 
+  // For uploaded images
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -139,8 +140,8 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
       )
 
       if (size !== null) {
-        const sizeAttr = size.trim() ? ` =${size.trim()}` : ''
-        insertAtCursor(`\n![${file.name}](${url}${sizeAttr})\n`, '', '')
+        const altText = size.trim() ? `${file.name} =${size.trim()}` : file.name
+        insertAtCursor(`\n![${altText}](${url})\n`, '', '')
       }
     }
 
@@ -322,8 +323,8 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
                 '200'
               )
               if (size !== null) {
-                const sizeAttr = size.trim() ? ` =${size.trim()}` : ''
-                insertAtCursor(`\n![image](${url}${sizeAttr})\n`, '', '')
+                const altText = size.trim() ? `image =${size.trim()}` : 'image'
+                insertAtCursor(`\n![${altText}](${url})\n`, '', '')
               }
             }
           }}
