@@ -33,7 +33,7 @@ export default async function Navbar() {
             <div className="flex items-center gap-6">
               <Link
                 href="/"
-                className="text-xs uppercase tracking-widest link-hover"
+                className="text-xs uppercase tracking-widest hover:underline"
                 style={{ color: '#e05565' }}
               >
                 Home
@@ -47,7 +47,7 @@ export default async function Navbar() {
               <>
                 <Link
                   href="/new-post"
-                  className="text-xs uppercase tracking-widest link-hover"
+                  className="text-xs uppercase tracking-widest hover:underline"
                   style={{ color: '#5ec269' }}
                 >
                   New Post
@@ -56,12 +56,21 @@ export default async function Navbar() {
                   className="flex items-center gap-2 border px-3 py-1.5"
                   style={{ borderColor: '#2a2a2a' }}
                 >
-                  <span
-                    className="text-xs uppercase tracking-wide"
+                  <Link
+                    href="/profile"
+                    className="text-xs uppercase tracking-wide hover:underline"
                     style={{ color: '#e0e0e0' }}
                   >
                     {profile?.username || user.email}
-                  </span>
+                  </Link>
+                  <span style={{ color: '#2a2a2a' }}>|</span>
+                  <Link
+                    href="/settings"
+                    className="text-xs hover:underline"
+                    style={{ color: '#888' }}
+                  >
+                    ⚙
+                  </Link>
                   <span style={{ color: '#2a2a2a' }}>|</span>
                   <LogoutButton />
                 </div>
@@ -70,14 +79,14 @@ export default async function Navbar() {
               <div className="flex items-center gap-4">
                 <Link
                   href="/login"
-                  className="text-xs uppercase tracking-widest link-hover"
+                  className="text-xs uppercase tracking-widest hover:underline"
                   style={{ color: '#e0e0e0' }}
                 >
                   Log In
                 </Link>
                 <Link
                   href="/signup"
-                  className="text-xs uppercase tracking-widest border px-3 py-1.5 transition-colors"
+                  className="text-xs uppercase tracking-widest border px-3 py-1.5"
                   style={{
                     color: '#e05565',
                     borderColor: '#e05565',

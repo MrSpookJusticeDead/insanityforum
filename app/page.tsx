@@ -5,6 +5,8 @@ import Link from 'next/link'
 export default async function HomePage() {
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { data: categories } = await supabase
     .from('categories')
     .select('*')
@@ -46,69 +48,85 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Divider */}
       <hr style={{ borderColor: '#2a2a2a' }} className="mb-8" />
 
-      {/* Section title */}
       <h1 className="text-xl font-bold mb-6" style={{ color: '#e0e0e0' }}>
         Recent Posts
       </h1>
 
-      {/* Posts */}
       {posts && posts.length > 0 ? (
         <div>
-          {posts.map((post) => (
-            <div
-              key={post.id}
-              className="border-b py-5"
-              style={{ borderColor: '#2a2a2a' }}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <Link
-                    href={`/post/${post.id}`}
-                    className="font-bold hover:underline"
-                    style={{ color: '#e0e0e0' }}
-                  >
-                    {post.title}
-                  </Link>
-                  <p
-                    className="mt-1 text-sm line-clamp-1"
-                    style={{ color: '#888' }}
-                  >
-                    {post.content}
-                  </p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs" style={{ color: '#888' }}>
-                      by{' '}
-                      <span style={{ color: '#e05565' }}>
-                        {post.profiles?.username || 'Unknown'}
-                      </span>
-                    </span>
-                    <span style={{ color: '#2a2a2a' }}>·</span>
-                    <span
-                      className="text-xs border px-2 py-0.5"
-                      style={{ color: '#5ec269', borderColor: '#2a2a2a' }}
+          {posts.map((post) => {
+            const isOwner = user?.id === post.user_id
+
+            return (
+              <div
+                key={post.id}
+                className="border-b py-5"
+                style={{ borderColor: '#2a2a2a' }}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <Link
+                      href={`/post/${post.id}`}
+                      className="font-bold hover:underline"
+                      style={{ color: '#e0e0e0' }}
                     >
-                      {post.categories?.name}
+                      {post.title}
+                    </Link>
+                    <p
+                      className="mt-1 text-sm line-clamp-1"
+                      style={{ color: '#888' }}
+                    >
+                      {post.content}
+                    </p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="text-xs" style={{ color: '#888' }}>
+                        by{' '}
+                        <Link
+                          href={`/profile/${post.profiles?.username}`}
+                          className="hover:underline"
+                          style={{ color: '#e05565' }}
+                        >
+                          {post.profiles?.username || 'Unknown'}
+                        </Link>
+                      </span>
+                      <span style={{ color: '#2a2a2a' }}>·</span>
+                      <span
+                        className="text-xs border px-2 py-0.5"
+                        style={{ color: '#5ec269', borderColor: '#2a2a2a' }}
+                      >
+                        {post.categories?.name}
+                      </span>
+                      <span style={{ color: '#2a2a2a' }}>·</span>
+                      <span className="text-xs" style={{ color: '#555' }}>
+                        {new Date(post.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span
+                      className="text-xs border px-2 py-1"
+                      style={{ color: '#888', borderColor: '#2a2a2a' }}
+                    >
+                      {post.comments?.[0]?.count || 0} replies
                     </span>
-                    <span style={{ color: '#2a2a2a' }}>·</span>
-                    <span className="text-xs" style={{ color: '#555' }}>
-                      {new Date(post.created_at).toLocaleDateString()}
-                    </span>
+                    {isOwner && (
+                      <>
+                        <Link
+                          href={`/edit-post/${post.id}`}
+                          className="text-xs uppercase tracking-widest hover:underline"
+                          style={{ color: '#e05565' }}
+                        >
+                          Edit
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
-                <div className="flex-shrink-0">
-                  <span
-                    className="text-xs border px-2 py-1"
-                    style={{ color: '#888', borderColor: '#2a2a2a' }}
-                  >
-                    {post.comments?.[0]?.count || 0} replies
-                  </span>
-                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <div

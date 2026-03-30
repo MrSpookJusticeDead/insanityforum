@@ -30,11 +30,10 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh the session
   const { data: { user } } = await supabase.auth.getUser()
 
   // Protect routes that require authentication
-  const protectedRoutes = ['/new-post', '/profile']
+  const protectedRoutes = ['/new-post', '/profile', '/settings', '/edit-post']
   const isProtectedRoute = protectedRoutes.some(route =>
     request.nextUrl.pathname.startsWith(route)
   )

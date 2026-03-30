@@ -37,13 +37,14 @@ export default async function PostPage({
     .order('created_at', { ascending: true })
 
   const { data: { user } } = await supabase.auth.getUser()
+  const isOwner = user?.id === post.user_id
 
   return (
     <div className="max-w-3xl mx-auto">
       {/* Back link */}
       <Link
         href="/"
-        className="text-xs uppercase tracking-widest link-hover inline-block mb-6"
+        className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
         style={{ color: '#888' }}
       >
         ← Back to posts
@@ -51,14 +52,26 @@ export default async function PostPage({
 
       {/* Post */}
       <article>
-        <div className="mb-4">
+        <div className="flex items-center justify-between mb-4">
           <Link
             href={`/category/${post.categories?.slug}`}
-            className="text-xs uppercase tracking-widest border px-2 py-0.5"
+            className="text-xs uppercase tracking-widest border px-2 py-0.5 hover:underline"
             style={{ color: '#5ec269', borderColor: '#2a2a2a' }}
           >
             {post.categories?.name}
           </Link>
+
+          {isOwner && (
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/edit-post/${post.id}`}
+                className="text-xs uppercase tracking-widest hover:underline"
+                style={{ color: '#e05565' }}
+              >
+                Edit
+              </Link>
+            </div>
+          )}
         </div>
 
         <h1 className="text-2xl font-bold mb-3" style={{ color: '#e0e0e0' }}>
@@ -68,12 +81,24 @@ export default async function PostPage({
         <div className="flex items-center gap-2 text-xs mb-6" style={{ color: '#888' }}>
           <span>
             posted by{' '}
-            <span style={{ color: '#e05565' }}>{post.profiles?.username}</span>
+            <Link
+              href={`/profile/${post.profiles?.username}`}
+              className="hover:underline"
+              style={{ color: '#e05565' }}
+            >
+              {post.profiles?.username}
+            </Link>
           </span>
           <span style={{ color: '#2a2a2a' }}>·</span>
           <span style={{ color: '#555' }}>
             {new Date(post.created_at).toLocaleString()}
           </span>
+          {post.updated_at !== post.created_at && (
+            <>
+              <span style={{ color: '#2a2a2a' }}>·</span>
+              <span style={{ color: '#555' }}>edited</span>
+            </>
+          )}
         </div>
 
         <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
@@ -86,7 +111,6 @@ export default async function PostPage({
         </div>
       </article>
 
-      {/* Divider */}
       <hr style={{ borderColor: '#2a2a2a' }} className="my-8" />
 
       {/* Comments Section */}
@@ -99,7 +123,7 @@ export default async function PostPage({
 
         {!user && (
           <p className="text-xs mb-6" style={{ color: '#888' }}>
-            <Link href="/login" className="link-hover" style={{ color: '#e05565' }}>
+            <Link href="/login" className="hover:underline" style={{ color: '#e05565' }}>
               Log in
             </Link>{' '}
             to leave a comment.

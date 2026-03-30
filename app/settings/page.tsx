@@ -1,0 +1,329 @@
+// app/settings/page.tsx
+'use client'
+
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+
+export default function SettingsPage() {
+  const [username, setUsername] = useState('')
+  const [bio, setBio] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [deleteText, setDeleteText] = useState('')
+  const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function loadProfile() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (profile) {
+        setUsername(profile.username || '')
+        setBio(profile.bio || '')
+      }
+    }
+    loadProfile()
+  }, [])
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        username,
+        bio,
+      })
+      .eq('id', user.id)
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setMessage('Profile updated successfully')
+      router.refresh()
+    }
+    setLoading(false)
+  }
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setMessage(null)
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match')
+      setLoading(false)
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters')
+      setLoading(false)
+      return
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setMessage('Password updated successfully')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    }
+    setLoading(false)
+  }
+
+  const handleDeleteAccount = async () => {
+    if (deleteText !== 'DELETE') return
+
+    setLoading(true)
+    setError(null)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    // Delete user's comments
+    await supabase
+      .from('comments')
+      .delete()
+      .eq('user_id', user.id)
+
+    // Delete user's posts
+    await supabase
+      .from('posts')
+      .delete()
+      .eq('user_id', user.id)
+
+    // Delete profile
+    await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', user.id)
+
+    // Sign out
+    await supabase.auth.signOut()
+
+    router.push('/')
+    router.refresh()
+  }
+
+  return (
+    <div className="max-w-lg mx-auto">
+      {/* Back link */}
+      <Link
+        href="/profile"
+        className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
+        style={{ color: '#888' }}
+      >
+        ← Back to profile
+      </Link>
+
+      <h1 className="text-xl font-bold mb-6" style={{ color: '#e0e0e0' }}>
+        Account Settings
+      </h1>
+
+      {/* Messages */}
+      {message && (
+        <div
+          className="text-xs border px-3 py-2 mb-6"
+          style={{ color: '#5ec269', borderColor: '#5ec269' }}
+        >
+          {message}
+        </div>
+      )}
+      {error && (
+        <div
+          className="text-xs border px-3 py-2 mb-6"
+          style={{ color: '#e05565', borderColor: '#e05565' }}
+        >
+          {error}
+        </div>
+      )}
+
+      {/* ===== PROFILE SECTION ===== */}
+      <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
+
+      <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e0e0e0' }}>
+        Profile
+      </h2>
+
+      <form onSubmit={handleUpdateProfile} className="space-y-4 mb-8">
+        <div>
+          <label
+            className="block text-xs uppercase tracking-widest mb-2"
+            style={{ color: '#888' }}
+          >
+            Username
+          </label>
+          <input
+            type="text"
+            required
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div>
+          <label
+            className="block text-xs uppercase tracking-widest mb-2"
+            style={{ color: '#888' }}
+          >
+            Bio
+          </label>
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            rows={3}
+            className="w-full px-3 py-2 text-sm"
+            placeholder="Tell us about yourself..."
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="text-xs uppercase tracking-widest border px-4 py-2 cursor-pointer disabled:opacity-50"
+          style={{ color: '#5ec269', borderColor: '#5ec269' }}
+        >
+          {loading ? 'Saving...' : 'Save Profile'}
+        </button>
+      </form>
+
+      {/* ===== PASSWORD SECTION ===== */}
+      <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
+
+      <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e0e0e0' }}>
+        Change Password
+      </h2>
+
+      <form onSubmit={handleChangePassword} className="space-y-4 mb-8">
+        <div>
+          <label
+            className="block text-xs uppercase tracking-widest mb-2"
+            style={{ color: '#888' }}
+          >
+            New Password
+          </label>
+          <input
+            type="password"
+            required
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full px-3 py-2 text-sm"
+            placeholder="••••••••"
+            minLength={6}
+          />
+        </div>
+
+        <div>
+          <label
+            className="block text-xs uppercase tracking-widest mb-2"
+            style={{ color: '#888' }}
+          >
+            Confirm New Password
+          </label>
+          <input
+            type="password"
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full px-3 py-2 text-sm"
+            placeholder="••••••••"
+            minLength={6}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="text-xs uppercase tracking-widest border px-4 py-2 cursor-pointer disabled:opacity-50"
+          style={{ color: '#e05565', borderColor: '#e05565' }}
+        >
+          {loading ? 'Updating...' : 'Update Password'}
+        </button>
+      </form>
+
+      {/* ===== DANGER ZONE ===== */}
+      <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
+
+      <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e05565' }}>
+        Danger Zone
+      </h2>
+
+      {!deleteConfirm ? (
+        <button
+          onClick={() => setDeleteConfirm(true)}
+          className="text-xs uppercase tracking-widest border px-4 py-2 cursor-pointer"
+          style={{ color: '#e05565', borderColor: '#e05565' }}
+        >
+          Delete Account
+        </button>
+      ) : (
+        <div
+          className="border p-4 space-y-3"
+          style={{ borderColor: '#e05565' }}
+        >
+          <p className="text-xs" style={{ color: '#e05565' }}>
+            This action is irreversible. All your posts and comments will be deleted.
+          </p>
+          <p className="text-xs" style={{ color: '#888' }}>
+            Type <strong style={{ color: '#e05565' }}>DELETE</strong> to confirm:
+          </p>
+          <input
+            type="text"
+            value={deleteText}
+            onChange={(e) => setDeleteText(e.target.value)}
+            className="w-full px-3 py-2 text-sm"
+            placeholder="Type DELETE"
+          />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleteText !== 'DELETE' || loading}
+              className="text-xs uppercase tracking-widest border px-4 py-2 cursor-pointer disabled:opacity-30"
+              style={{ color: '#e05565', borderColor: '#e05565' }}
+            >
+              {loading ? 'Deleting...' : 'Confirm Delete'}
+            </button>
+            <button
+              onClick={() => {
+                setDeleteConfirm(false)
+                setDeleteText('')
+              }}
+              className="text-xs uppercase tracking-widest hover:underline cursor-pointer"
+              style={{ color: '#888' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
