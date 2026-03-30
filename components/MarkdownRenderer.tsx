@@ -35,7 +35,7 @@ function MarkdownImage({ src, alt }: { src: string; alt: string }) {
   const sizeMatch = alt.match(/=(\d+)(?:x(\d+))?$/)
   const cleanAlt = alt.replace(/\s*=\d+(?:x\d+)?$/, '')
   
-  let maxWidth = 800 // Default max for posts
+  let maxWidth = 250 // Default max for posts
   let maxHeight: number | undefined = undefined
   
   if (sizeMatch) {
