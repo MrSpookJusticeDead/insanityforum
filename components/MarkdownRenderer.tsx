@@ -11,20 +11,20 @@ interface MarkdownRendererProps {
 
 // Custom audio component
 function AudioPlayer({ src, title }: { src: string; title: string }) {
-    return (
-        <div
-            className="my-3 border p-3"
-            style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}
-        >
-            <p className="text-xs mb-2" style={{ color: '#e0a550' }}>
-                🎵 {title}
-            </p>
-            <audio controls className="w-full" style={{ height: '37px' , width: '56%' }}>
-                <source src={src} />
-                Your browser does not support audio.
-            </audio>
-        </div>
-    )
+  return (
+    <div
+      className="my-3 border p-3"
+      style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}
+    >
+      <p className="text-xs mb-2" style={{ color: '#e0a550' }}>
+        🎵 {title}
+      </p>
+      <audio controls className="w-full md:w-3/5" style={{ height: '37px' }}>
+        <source src={src} />
+        Your browser does not support audio.
+      </audio>
+    </div>
+  )
 }
 
 // Custom image with error handling
