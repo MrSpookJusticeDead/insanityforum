@@ -1,5 +1,6 @@
 // components/CommentList.tsx
 import Avatar from './Avatar'
+import CommentRenderer from './CommentRenderer'
 
 interface Comment {
   id: string
@@ -28,6 +29,7 @@ export default function CommentList({ comments }: { comments: Comment[] }) {
           className="border-b py-4"
           style={{ borderColor: '#2a2a2a' }}
         >
+          {/* Comment header */}
           <div className="flex items-center gap-3 mb-2">
             <Avatar
               url={comment.profiles?.avatar_url || null}
@@ -41,12 +43,11 @@ export default function CommentList({ comments }: { comments: Comment[] }) {
               {new Date(comment.created_at).toLocaleString()}
             </span>
           </div>
-          <p
-            className="text-sm whitespace-pre-wrap pl-9"
-            style={{ color: '#ccc' }}
-          >
-            {comment.content}
-          </p>
+
+          {/* Comment content — rendered markdown */}
+          <div className="pl-9">
+            <CommentRenderer content={comment.content} />
+          </div>
         </div>
       ))}
     </div>
