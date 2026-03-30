@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import EditorWithPreview from '@/components/EditorWithPreview'
 
 interface Category {
   id: string
@@ -69,11 +70,10 @@ export default function NewPostPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Back link */}
+    <div className="max-w-3xl mx-auto">
       <Link
         href="/"
-        className="text-xs uppercase tracking-widest link-hover inline-block mb-6"
+        className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
         style={{ color: '#888' }}
       >
         ← Back to posts
@@ -97,14 +97,12 @@ export default function NewPostPage() {
 
         <div>
           <label
-            htmlFor="title"
             className="block text-xs uppercase tracking-widest mb-2"
             style={{ color: '#888' }}
           >
             Title
           </label>
           <input
-            id="title"
             type="text"
             required
             value={title}
@@ -116,14 +114,12 @@ export default function NewPostPage() {
 
         <div>
           <label
-            htmlFor="category"
             className="block text-xs uppercase tracking-widest mb-2"
             style={{ color: '#888' }}
           >
             Category
           </label>
           <select
-            id="category"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             className="w-full px-3 py-2 text-sm"
@@ -138,31 +134,23 @@ export default function NewPostPage() {
 
         <div>
           <label
-            htmlFor="content"
             className="block text-xs uppercase tracking-widest mb-2"
             style={{ color: '#888' }}
           >
             Content
           </label>
-          <textarea
-            id="content"
-            required
-            rows={12}
+          <EditorWithPreview
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full px-3 py-2 text-sm"
-            placeholder="Write your post..."
+            onChange={setContent}
+            placeholder="Write your post... (Markdown supported)"
           />
         </div>
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full text-xs uppercase tracking-widest border px-4 py-3 transition-colors cursor-pointer disabled:opacity-50"
-          style={{
-            color: '#e05565',
-            borderColor: '#e05565',
-          }}
+          disabled={loading || !content.trim()}
+          className="w-full text-xs uppercase tracking-widest border px-4 py-3 cursor-pointer disabled:opacity-50"
+          style={{ color: '#e05565', borderColor: '#e05565' }}
         >
           {loading ? 'Publishing...' : 'Publish Post'}
         </button>

@@ -3,8 +3,9 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react'
 import Link from 'next/link'
+import EditorWithPreview from '@/components/EditorWithPreview'
 
 interface Category {
   id: string
@@ -12,7 +13,8 @@ interface Category {
   slug: string
 }
 
-export default function EditPostPage({ params }: { params: { id: string } }) {
+export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [categoryId, setCategoryId] = useState('')
@@ -25,17 +27,12 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     async function loadData() {
-      // Unwrap params
-      const { id } = await params
-
-      // Load categories
       const { data: cats } = await supabase
         .from('categories')
         .select('*')
         .order('name')
       if (cats) setCategories(cats)
 
-      // Load post
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
@@ -54,7 +51,6 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
         return
       }
 
-      // Check ownership
       if (post.user_id !== user.id) {
         setError('You can only edit your own posts')
         setPostLoading(false)
@@ -67,14 +63,12 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
       setPostLoading(false)
     }
     loadData()
-  }, [])
+  }, [id])
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-
-    const { id } = await params
 
     const { error } = await supabase
       .from('posts')
@@ -101,15 +95,12 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
     }
 
     setLoading(true)
-    const { id } = await params
 
-    // Delete comments first
     await supabase
       .from('comments')
       .delete()
       .eq('post_id', id)
 
-    // Delete post
     const { error } = await supabase
       .from('posts')
       .delete()
@@ -126,15 +117,14 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
 
   if (postLoading) {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <p className="text-sm" style={{ color: '#888' }}>Loading...</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Back link */}
+    <div className="max-w-3xl mx-auto">
       <Link
         href="/"
         className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
@@ -212,18 +202,16 @@ export default function EditPostPage({ params }: { params: { id: string } }) {
           >
             Content
           </label>
-          <textarea
-            required
-            rows={12}
+          <EditorWithPreview
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full px-3 py-2 text-sm"
+            onChange={setContent}
+            placeholder="Write your post..."
           />
         </div>
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !content.trim()}
           className="w-full text-xs uppercase tracking-widest border px-4 py-3 cursor-pointer disabled:opacity-50"
           style={{ color: '#5ec269', borderColor: '#5ec269' }}
         >

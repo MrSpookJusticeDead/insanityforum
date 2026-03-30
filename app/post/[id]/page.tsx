@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import CommentForm from '@/components/CommentForm'
 import CommentList from '@/components/CommentList'
 import Avatar from '@/components/Avatar'
+import MarkdownRenderer from '@/components/MarkdownRenderer'
 import Link from 'next/link'
 
 export default async function PostPage({
@@ -105,12 +106,8 @@ export default async function PostPage({
 
         <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
 
-        <div
-          className="text-sm whitespace-pre-wrap leading-relaxed"
-          style={{ color: '#ccc' }}
-        >
-          {post.content}
-        </div>
+        {/* Rendered markdown content */}
+        <MarkdownRenderer content={post.content} />
       </article>
 
       <hr style={{ borderColor: '#2a2a2a' }} className="my-8" />
