@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import LogoutButton from './LogoutButton'
 import Avatar from './Avatar'
+import NotificationBell from './NotificationBell'
 
 export default async function Navbar() {
   const supabase = await createClient()
@@ -70,6 +71,9 @@ export default async function Navbar() {
                       {profile?.username || user.email}
                     </span>
                   </Link>
+                  <span style={{ color: '#2a2a2a' }}>|</span>
+                  {/* Notification Bell */}
+                  <NotificationBell userId={user.id} />
                   <span style={{ color: '#2a2a2a' }}>|</span>
                   <Link
                     href="/settings"
