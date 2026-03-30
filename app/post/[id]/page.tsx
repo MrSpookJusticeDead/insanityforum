@@ -1,8 +1,7 @@
 // app/post/[id]/page.tsx
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import CommentForm from '@/components/CommentForm'
-import CommentList from '@/components/CommentList'
+import RealtimeCommentSection from '@/components/RealtimeCommentSection'
 import Avatar from '@/components/Avatar'
 import MarkdownRenderer from '@/components/MarkdownRenderer'
 import Link from 'next/link'
@@ -106,30 +105,16 @@ export default async function PostPage({
 
         <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
 
-        {/* Rendered markdown content */}
         <MarkdownRenderer content={post.content} />
       </article>
 
       <hr style={{ borderColor: '#2a2a2a' }} className="my-8" />
 
-      <div>
-        <h2 className="text-sm font-bold uppercase tracking-widest mb-6" style={{ color: '#e0e0e0' }}>
-          Comments ({comments?.length || 0})
-        </h2>
-
-        {user && <CommentForm postId={id} />}
-
-        {!user && (
-          <p className="text-xs mb-6" style={{ color: '#888' }}>
-            <Link href="/login" className="hover:underline" style={{ color: '#e05565' }}>
-              Log in
-            </Link>{' '}
-            to leave a comment.
-          </p>
-        )}
-
-        <CommentList comments={comments || []} />
-      </div>
+      <RealtimeCommentSection
+        postId={id}
+        initialComments={comments || []}
+        currentUserId={user?.id}
+      />
     </div>
   )
 }

@@ -2,16 +2,26 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import CommentEditor from './CommentEditor'
 import CommentRenderer from './CommentRenderer'
 
-export default function CommentForm({ postId }: { postId: string }) {
+interface CommentFormProps {
+  postId: string
+  onCommentPosted?: (comment: {
+    id: string
+    content: string
+    created_at: string
+    user_id: string
+    post_id: string
+    profiles: { username: string; avatar_url: string | null } | null
+  }) => void
+}
+
+export default function CommentForm({ postId, onCommentPosted }: CommentFormProps) {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
   const [tab, setTab] = useState<'write' | 'preview'>('write')
-  const router = useRouter()
   const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,17 +32,32 @@ export default function CommentForm({ postId }: { postId: string }) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { error } = await supabase.from('comments').insert({
-      content,
-      post_id: postId,
-      user_id: user.id,
-    })
+    const { data: comment, error } = await supabase
+      .from('comments')
+      .insert({
+        content,
+        post_id: postId,
+        user_id: user.id,
+      })
+      .select('id, content, created_at, user_id, post_id')
+      .single()
 
-    if (!error) {
+    if (!error && comment) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', user.id)
+        .single()
+
+      onCommentPosted?.({
+        ...comment,
+        profiles: profile,
+      })
+
       setContent('')
       setTab('write')
-      router.refresh()
     }
+
     setLoading(false)
   }
 

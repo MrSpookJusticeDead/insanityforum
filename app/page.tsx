@@ -1,6 +1,7 @@
 // app/page.tsx
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import RealtimePostList from '@/components/RealtimePostList'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -12,7 +13,7 @@ export default async function HomePage() {
     .select('*')
     .order('name')
 
-  const { data: posts } = await supabase
+  const { data: postsRaw } = await supabase
     .from('posts')
     .select(`
       *,
@@ -22,6 +23,12 @@ export default async function HomePage() {
     `)
     .order('created_at', { ascending: false })
     .limit(20)
+
+  // Normalize comment count
+  const posts = (postsRaw || []).map((p) => ({
+    ...p,
+    comment_count: p.comments?.[0]?.count || 0,
+  }))
 
   return (
     <div>
@@ -54,97 +61,10 @@ export default async function HomePage() {
         Recent Posts
       </h1>
 
-      {posts && posts.length > 0 ? (
-        <div>
-          {posts.map((post) => {
-            const isOwner = user?.id === post.user_id
-
-            return (
-              <div
-                key={post.id}
-                className="border-b py-5"
-                style={{ borderColor: '#2a2a2a' }}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/post/${post.id}`}
-                      className="font-bold hover:underline"
-                      style={{ color: '#e0e0e0' }}
-                    >
-                      {post.title}
-                    </Link>
-                    <p
-                      className="mt-1 text-sm line-clamp-1"
-                      style={{ color: '#888' }}
-                    >
-                      {post.content}
-                    </p>
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="text-xs" style={{ color: '#888' }}>
-                        by{' '}
-                        <Link
-                          href={`/profile/${post.profiles?.username}`}
-                          className="hover:underline"
-                          style={{ color: '#e05565' }}
-                        >
-                          {post.profiles?.username || 'Unknown'}
-                        </Link>
-                      </span>
-                      <span style={{ color: '#2a2a2a' }}>·</span>
-                      <span
-                        className="text-xs border px-2 py-0.5"
-                        style={{ color: '#5ec269', borderColor: '#2a2a2a' }}
-                      >
-                        {post.categories?.name}
-                      </span>
-                      <span style={{ color: '#2a2a2a' }}>·</span>
-                      <span className="text-xs" style={{ color: '#555' }}>
-                        {new Date(post.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span
-                      className="text-xs border px-2 py-1"
-                      style={{ color: '#888', borderColor: '#2a2a2a' }}
-                    >
-                      {post.comments?.[0]?.count || 0} replies
-                    </span>
-                    {isOwner && (
-                      <>
-                        <Link
-                          href={`/edit-post/${post.id}`}
-                          className="text-xs uppercase tracking-widest hover:underline"
-                          style={{ color: '#e05565' }}
-                        >
-                          Edit
-                        </Link>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      ) : (
-        <div
-          className="text-center py-16 border"
-          style={{ borderColor: '#2a2a2a' }}
-        >
-          <p className="text-sm mb-4" style={{ color: '#888' }}>
-            No posts yet. Be the first to post!
-          </p>
-          <Link
-            href="/new-post"
-            className="text-xs uppercase tracking-widest border px-4 py-2 inline-block"
-            style={{ color: '#e05565', borderColor: '#e05565' }}
-          >
-            Create Post
-          </Link>
-        </div>
-      )}
+      <RealtimePostList
+        initialPosts={posts}
+        currentUserId={user?.id}
+      />
     </div>
   )
 }
