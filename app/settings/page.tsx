@@ -110,42 +110,27 @@ export default function SettingsPage() {
     setLoading(true)
     setError(null)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    try {
+      const res = await fetch('/api/delete-account', {
+        method: 'DELETE',
+      })
 
-    // Delete avatar from storage
-    const { data: existingFiles } = await supabase.storage
-      .from('avatars')
-      .list(user.id)
+      const data = await res.json()
 
-    if (existingFiles && existingFiles.length > 0) {
-      const filesToDelete = existingFiles.map(f => `${user.id}/${f.name}`)
-      await supabase.storage.from('avatars').remove(filesToDelete)
+      if (!res.ok) {
+        setError(data.error || 'Failed to delete account')
+        setLoading(false)
+        return
+      }
+
+      // Sign out locally after server deleted the auth user
+      await supabase.auth.signOut()
+      router.push('/')
+      router.refresh()
+    } catch {
+      setError('Something went wrong')
+      setLoading(false)
     }
-
-    // Delete user's comments
-    await supabase
-      .from('comments')
-      .delete()
-      .eq('user_id', user.id)
-
-    // Delete user's posts
-    await supabase
-      .from('posts')
-      .delete()
-      .eq('user_id', user.id)
-
-    // Delete profile
-    await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', user.id)
-
-    // Sign out
-    await supabase.auth.signOut()
-
-    router.push('/')
-    router.refresh()
   }
 
   if (pageLoading) {
