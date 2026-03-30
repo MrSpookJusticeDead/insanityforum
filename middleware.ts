@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
           supabaseResponse = NextResponse.next({
@@ -32,13 +32,17 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect routes that require authentication
-  const protectedRoutes = ['/new-post', '/profile', '/settings', '/edit-post']
-  const isProtectedRoute = protectedRoutes.some(route =>
-    request.nextUrl.pathname.startsWith(route)
-  )
+  const { pathname } = request.nextUrl
 
-  if (isProtectedRoute && !user) {
+  // Exact protected routes — /profile alone (own profile shortcut) requires login
+  // but /profile/username is public
+  const isProtected =
+    pathname === '/profile' ||
+    pathname.startsWith('/new-post') ||
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/edit-post')
+
+  if (isProtected && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
