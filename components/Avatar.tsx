@@ -1,5 +1,8 @@
 // components/Avatar.tsx
+'use client'
+
 import Image from 'next/image'
+import { useState } from 'react'
 
 interface AvatarProps {
   url: string | null
@@ -9,8 +12,8 @@ interface AvatarProps {
 }
 
 export default function Avatar({ url, username, size = 40, className = '' }: AvatarProps) {
-  const src = url || '/default-avatar.png'
-  const initials = username?.charAt(0).toUpperCase() || '?'
+  const [imgError, setImgError] = useState(false)
+  const src = (!imgError && url) ? url : '/default-avatar.png'
 
   return (
     <div
@@ -29,11 +32,7 @@ export default function Avatar({ url, username, size = 40, className = '' }: Ava
         height={size}
         className="object-cover w-full h-full"
         unoptimized
-        onError={(e) => {
-          // If image fails to load, hide it (the background color shows)
-          const target = e.target as HTMLImageElement
-          target.style.display = 'none'
-        }}
+        onError={() => setImgError(true)}
       />
     </div>
   )
