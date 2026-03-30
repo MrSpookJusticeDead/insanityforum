@@ -15,7 +15,7 @@ function CommentImage({ src, alt }: { src: string; alt: string }) {
   const sizeMatch = alt.match(/=(\d+)(?:x(\d+))?$/)
   const cleanAlt = alt.replace(/\s*=\d+(?:x\d+)?$/, '')
 
-  let maxWidth = 500
+  let maxWidth = 250        // ← default size (no =size specified)
   let maxHeight: number | undefined = undefined
 
   if (sizeMatch) {
@@ -25,10 +25,11 @@ function CommentImage({ src, alt }: { src: string; alt: string }) {
     }
   }
 
-  maxWidth = Math.min(maxWidth, 500)
+  maxWidth = Math.min(maxWidth, 350)    // ← absolute max width for comments
   if (maxHeight) {
-    maxHeight = Math.min(maxHeight, 400)
+    maxHeight = Math.min(maxHeight, 300) // ← absolute max height for comments
   }
+
 
   if (error) {
     return (
