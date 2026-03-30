@@ -35,7 +35,7 @@ function MarkdownImage({ src, alt }: { src: string; alt: string }) {
     const sizeMatch = alt.match(/=(\d+)(?:x(\d+))?$/)
     const cleanAlt = alt.replace(/\s*=\d+(?:x\d+)?$/, '')
 
-    let maxWidth = 800 // Default max for posts (no size = full width up to 800)
+    let maxWidth = 200 // Default max for posts (no size = full width up to 800)
     let maxHeight: number | undefined = undefined
 
     if (sizeMatch) {
@@ -46,9 +46,9 @@ function MarkdownImage({ src, alt }: { src: string; alt: string }) {
     }
 
     // Enforce max limits
-    maxWidth = Math.min(maxWidth, 800)
+    maxWidth = Math.min(maxWidth, 200)
     if (maxHeight) {
-        maxHeight = Math.min(maxHeight, 600)
+        maxHeight = Math.min(maxHeight, 350)
     }
 
     if (error) {

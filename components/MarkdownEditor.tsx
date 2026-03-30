@@ -135,8 +135,8 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
     const url = await uploadFile(file)
     if (url) {
       const size = prompt(
-        'Enter image size (e.g., 300x200 or just 300 for width).\nLeave empty for full size (max 800px).',
-        '800'
+        'Enter image size (e.g., 300x200 or just 300 for width).\nLeave empty for full size (max 200px).',
+        '200'
       )
 
       if (size !== null) {
