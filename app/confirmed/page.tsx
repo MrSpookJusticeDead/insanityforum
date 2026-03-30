@@ -1,29 +1,60 @@
 // app/confirmed/page.tsx
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
-// Remove searchParams entirely — it was unused
-export default async function ConfirmedPage() {
+interface ConfirmedPageProps {
+  searchParams: Promise<{ token?: string }>
+}
+
+export default async function ConfirmedPage({ searchParams }: ConfirmedPageProps) {
+  const { token } = await searchParams
+
+  // No token in URL → reject immediately
+  if (!token) {
+    redirect('/')
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Not logged in → reject
   if (!user) {
     redirect('/')
   }
 
-  if (!user.email_confirmed_at) {
+  // Validate token using admin client (bypasses RLS)
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+
+  const { data: confirmToken } = await adminClient
+    .from('confirmation_tokens')
+    .select('*')
+    .eq('token', token)
+    .eq('user_id', user.id)   // must belong to this user
+    .eq('used', false)         // must not be used yet
+    .gt('expires_at', new Date().toISOString()) // must not be expired
+    .single()
+
+  // Token not found, already used, expired, or belongs to someone else → reject
+  if (!confirmToken) {
     redirect('/')
   }
 
-  // Fix: use new Date() instead of Date.now() for server components
-  const confirmedAt = new Date(user.email_confirmed_at).getTime()
-  const now = new Date().getTime()
-  const twoMinutes = 2 * 60 * 1000
-
-  if (now - confirmedAt > twoMinutes) {
-    redirect('/')
-  }
+  // Immediately mark token as used so it can never be used again
+  await adminClient
+    .from('confirmation_tokens')
+    .update({ used: true })
+    .eq('id', confirmToken.id)
 
   return (
     <div
@@ -47,7 +78,7 @@ export default async function ConfirmedPage() {
           textAlign: 'center',
         }}
       >
-        {/* Glitch image — eslint-disable for external gif */}
+        {/* Glitch image */}
         <div style={{ marginBottom: '24px' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
