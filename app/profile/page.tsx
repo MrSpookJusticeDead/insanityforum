@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Avatar from '@/components/Avatar'
+import DeveloperTag from '@/components/DeveloperTag'
+import { isDeveloper } from '@/lib/developer'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -31,6 +33,8 @@ export default async function ProfilePage() {
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
 
+  const dev = isDeveloper(user.id)
+
   return (
     <div className="max-w-3xl mx-auto">
       {/* Profile Header */}
@@ -42,9 +46,12 @@ export default async function ProfilePage() {
             size={64}
           />
           <div>
-            <h1 className="text-xl font-bold" style={{ color: '#e0e0e0' }}>
-              {profile?.username || 'Unknown'}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold" style={{ color: '#e0e0e0' }}>
+                {profile?.username || 'Unknown'}
+              </h1>
+              {dev && <DeveloperTag />}
+            </div>
             <p className="text-xs" style={{ color: '#555' }}>
               {user.email}
             </p>

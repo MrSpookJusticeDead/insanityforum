@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Avatar from '@/components/Avatar'
+import DeveloperTag from '@/components/DeveloperTag'
+import { isDeveloper } from '@/lib/developer'
 
 export default async function PublicProfilePage({
   params,
@@ -37,6 +39,7 @@ export default async function PublicProfilePage({
 
   const { data: { user } } = await supabase.auth.getUser()
   const isOwnProfile = user?.id === profile.id
+  const dev = isDeveloper(profile.id)
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -57,9 +60,12 @@ export default async function PublicProfilePage({
             size={64}
           />
           <div>
-            <h1 className="text-xl font-bold" style={{ color: '#e0e0e0' }}>
-              {profile.username}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold" style={{ color: '#e0e0e0' }}>
+                {profile.username}
+              </h1>
+              {dev && <DeveloperTag />}
+            </div>
             <p className="text-xs mt-1" style={{ color: '#888' }}>
               Joined {new Date(profile.created_at).toLocaleDateString()}
             </p>
