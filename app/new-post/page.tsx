@@ -4,6 +4,7 @@
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 
 interface Category {
   id: string
@@ -68,71 +69,104 @@ export default function NewPostPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-purple-200 p-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
-          ✨ Create New Post
-        </h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-100 border-2 border-red-400 text-red-700 px-5 py-4 rounded-xl font-medium">
-              ⚠️ {error}
-            </div>
-          )}
-          <div>
-            <label htmlFor="title" className="block text-sm font-bold text-gray-900 mb-2">
-              📝 Title
-            </label>
-            <input
-              id="title"
-              type="text"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl shadow-sm focus:ring-4 focus:ring-purple-300 focus:border-purple-500 transition-all text-gray-900 bg-white"
-              placeholder="What's on your mind?"
-            />
-          </div>
-          <div>
-            <label htmlFor="category" className="block text-sm font-bold text-gray-900 mb-2">
-              📂 Category
-            </label>
-            <select
-              id="category"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl shadow-sm focus:ring-4 focus:ring-purple-300 focus:border-purple-500 transition-all text-gray-900 bg-white"
-            >
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="content" className="block text-sm font-bold text-gray-900 mb-2">
-              💭 Content
-            </label>
-            <textarea
-              id="content"
-              required
-              rows={10}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl shadow-sm focus:ring-4 focus:ring-purple-300 focus:border-purple-500 transition-all text-gray-900 bg-white"
-              placeholder="Write your post content..."
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-6 rounded-xl hover:shadow-2xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed font-bold text-lg"
+    <div className="max-w-2xl mx-auto">
+      {/* Back link */}
+      <Link
+        href="/"
+        className="text-xs uppercase tracking-widest link-hover inline-block mb-6"
+        style={{ color: '#888' }}
+      >
+        ← Back to posts
+      </Link>
+
+      <h1 className="text-xl font-bold mb-6" style={{ color: '#e0e0e0' }}>
+        New Post
+      </h1>
+
+      <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && (
+          <div
+            className="text-xs border px-3 py-2"
+            style={{ color: '#e05565', borderColor: '#e05565' }}
           >
-            {loading ? '⏳ Publishing...' : '🚀 Publish Post'}
-          </button>
-        </form>
-      </div>
+            {error}
+          </div>
+        )}
+
+        <div>
+          <label
+            htmlFor="title"
+            className="block text-xs uppercase tracking-widest mb-2"
+            style={{ color: '#888' }}
+          >
+            Title
+          </label>
+          <input
+            id="title"
+            type="text"
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full px-3 py-2 text-sm"
+            placeholder="Post title"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="category"
+            className="block text-xs uppercase tracking-widest mb-2"
+            style={{ color: '#888' }}
+          >
+            Category
+          </label>
+          <select
+            id="category"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            className="w-full px-3 py-2 text-sm"
+          >
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="content"
+            className="block text-xs uppercase tracking-widest mb-2"
+            style={{ color: '#888' }}
+          >
+            Content
+          </label>
+          <textarea
+            id="content"
+            required
+            rows={12}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="w-full px-3 py-2 text-sm"
+            placeholder="Write your post..."
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full text-xs uppercase tracking-widest border px-4 py-3 transition-colors cursor-pointer disabled:opacity-50"
+          style={{
+            color: '#e05565',
+            borderColor: '#e05565',
+          }}
+        >
+          {loading ? 'Publishing...' : 'Publish Post'}
+        </button>
+      </form>
     </div>
   )
 }

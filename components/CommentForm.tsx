@@ -39,12 +39,21 @@ export default function CommentForm({ postId }: { postId: string }) {
         placeholder="Write a comment..."
         rows={3}
         required
-        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+        className="w-full px-3 py-2 text-sm"
+        style={{
+          backgroundColor: '#0e0e0e',
+          border: '1px solid #2a2a2a',
+          color: '#e0e0e0',
+        }}
       />
       <button
         type="submit"
         disabled={loading}
-        className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm"
+        className="mt-2 text-xs uppercase tracking-widest border px-4 py-2 transition-colors cursor-pointer disabled:opacity-50"
+        style={{
+          color: '#e05565',
+          borderColor: '#e05565',
+        }}
       >
         {loading ? 'Posting...' : 'Post Comment'}
       </button>

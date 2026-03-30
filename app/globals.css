@@ -2,8 +2,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #0e0e0e;
+  --foreground: #e0e0e0;
+  --accent: #e05565;
+  --accent-hover: #ff6b7a;
+  --border: #2a2a2a;
+  --card: #151515;
+  --card-hover: #1a1a1a;
+  --muted: #888888;
 }
 
 @theme inline {
@@ -13,43 +19,76 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Remove dark mode - it was causing the invisible text */
-/* @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-} */
-
 body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
 }
 
-/* Fix input text visibility */
+/* Input styling */
 input, textarea, select {
-  color: #0f172a !important;
-  background-color: white !important;
+  color: #e0e0e0 !important;
+  background-color: #0e0e0e !important;
+  border: 1px solid #2a2a2a !important;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #e05565 !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 input::placeholder, textarea::placeholder {
-  color: #94a3b8 !important;
+  color: #555555 !important;
 }
 
-/* Add some nice animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+option {
+  background-color: #151515;
+  color: #e0e0e0;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0e0e0e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a3a;
+}
+
+/* Selection */
+::selection {
+  background-color: #e05565;
+  color: #ffffff;
+}
+
+/* Link underline animation */
+.link-hover {
+  position: relative;
+}
+
+.link-hover::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background-color: #e05565;
+  transition: width 0.2s ease;
+}
+
+.link-hover:hover::after {
+  width: 100%;
 }

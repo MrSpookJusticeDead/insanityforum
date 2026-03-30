@@ -40,79 +40,100 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
-        <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">
-            Create your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSignUp}>
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
-              <input
-                id="username"
-                type="text"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Choose a username"
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="••••••••"
-                minLength={6}
-              />
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+    <div className="max-w-sm mx-auto mt-20">
+      <h1 className="text-xl font-bold mb-6" style={{ color: '#e0e0e0' }}>
+        Create Account
+      </h1>
+
+      <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
+
+      <form className="space-y-5" onSubmit={handleSignUp}>
+        {error && (
+          <div
+            className="text-xs border px-3 py-2"
+            style={{ color: '#e05565', borderColor: '#e05565' }}
           >
-            {loading ? 'Creating account...' : 'Sign Up'}
-          </button>
-          <p className="text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 hover:text-blue-500">
-              Log in
-            </Link>
-          </p>
-        </form>
-      </div>
+            {error}
+          </div>
+        )}
+
+        <div>
+          <label
+            htmlFor="username"
+            className="block text-xs uppercase tracking-widest mb-2"
+            style={{ color: '#888' }}
+          >
+            Username
+          </label>
+          <input
+            id="username"
+            type="text"
+            required
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full px-3 py-2 text-sm"
+            placeholder="Choose a username"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-xs uppercase tracking-widest mb-2"
+            style={{ color: '#888' }}
+          >
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-3 py-2 text-sm"
+            placeholder="you@example.com"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="password"
+            className="block text-xs uppercase tracking-widest mb-2"
+            style={{ color: '#888' }}
+          >
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-3 py-2 text-sm"
+            placeholder="••••••••"
+            minLength={6}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full text-xs uppercase tracking-widest border px-4 py-3 transition-colors cursor-pointer disabled:opacity-50"
+          style={{
+            color: '#e05565',
+            borderColor: '#e05565',
+          }}
+        >
+          {loading ? 'Creating account...' : 'Sign Up'}
+        </button>
+
+        <p className="text-xs text-center" style={{ color: '#888' }}>
+          Already have an account?{' '}
+          <Link href="/login" className="link-hover" style={{ color: '#e05565' }}>
+            Log in
+          </Link>
+        </p>
+      </form>
     </div>
   )
 }
