@@ -33,7 +33,7 @@ export default async function HomePage() {
             <span key={category.id} className="flex items-center gap-3">
               <Link
                 href={`/category/${category.slug}`}
-                className="text-xs uppercase tracking-widest link-hover"
+                className="text-xs uppercase tracking-widest hover:underline"
                 style={{ color: '#e05565' }}
               >
                 {category.name}
@@ -60,17 +60,15 @@ export default async function HomePage() {
           {posts.map((post) => (
             <div
               key={post.id}
-              className="border-b py-5 transition-colors"
+              className="border-b py-5"
               style={{ borderColor: '#2a2a2a' }}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <Link
                     href={`/post/${post.id}`}
-                    className="font-bold transition-colors hover:underline"
+                    className="font-bold hover:underline"
                     style={{ color: '#e0e0e0' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = '#e05565')}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = '#e0e0e0')}
                   >
                     {post.title}
                   </Link>
@@ -122,7 +120,7 @@ export default async function HomePage() {
           </p>
           <Link
             href="/new-post"
-            className="text-xs uppercase tracking-widest border px-4 py-2 transition-colors"
+            className="text-xs uppercase tracking-widest border px-4 py-2 inline-block"
             style={{ color: '#e05565', borderColor: '#e05565' }}
           >
             Create Post

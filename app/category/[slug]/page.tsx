@@ -34,7 +34,7 @@ export default async function CategoryPage({
       {/* Back link */}
       <Link
         href="/"
-        className="text-xs uppercase tracking-widest link-hover inline-block mb-6"
+        className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
         style={{ color: '#888' }}
       >
         ← Back to posts
@@ -60,10 +60,8 @@ export default async function CategoryPage({
               <div className="flex-1 min-w-0">
                 <Link
                   href={`/post/${post.id}`}
-                  className="font-bold transition-colors hover:underline"
+                  className="font-bold hover:underline"
                   style={{ color: '#e0e0e0' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = '#e05565')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = '#e0e0e0')}
                 >
                   {post.title}
                 </Link>

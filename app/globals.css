@@ -92,3 +92,14 @@ option {
 .link-hover:hover::after {
   width: 100%;
 }
+
+a.font-bold:hover {
+  color: #e05565 !important;
+}
+
+/* Button hover */
+a[style*="border-color: rgb(224, 85, 101)"]:hover,
+button[style*="border-color: rgb(224, 85, 101)"]:hover {
+  background-color: #e05565 !important;
+  color: #ffffff !important;
+}
