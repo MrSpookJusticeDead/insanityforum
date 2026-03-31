@@ -25,7 +25,20 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setError(error.message)
+      // Map Supabase error messages to friendly ones
+      if (error.message.toLowerCase().includes('invalid login credentials') ||
+          error.message.toLowerCase().includes('invalid credentials') ||
+          error.message.toLowerCase().includes('wrong password')) {
+        setError('Incorrect email or password.')
+      } else if (error.message.toLowerCase().includes('email not confirmed')) {
+        setError('Please confirm your email before logging in. Check your inbox.')
+      } else if (error.message.toLowerCase().includes('too many requests')) {
+        setError('Too many login attempts. Please wait a few minutes and try again.')
+      } else if (error.message.toLowerCase().includes('user not found')) {
+        setError('No account found with this email.')
+      } else {
+        setError(error.message)
+      }
       setLoading(false)
     } else {
       router.push('/')
@@ -93,10 +106,7 @@ export default function LoginPage() {
           type="submit"
           disabled={loading}
           className="w-full text-xs uppercase tracking-widest border px-4 py-3 transition-colors cursor-pointer disabled:opacity-50"
-          style={{
-            color: '#e05565',
-            borderColor: '#e05565',
-          }}
+          style={{ color: '#e05565', borderColor: '#e05565' }}
         >
           {loading ? 'Logging in...' : 'Log In'}
         </button>
