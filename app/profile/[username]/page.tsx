@@ -17,15 +17,17 @@ export default async function PublicProfilePage({
   const supabase = await createClient()
   const { username } = await params
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select(`
-      *,
-      ranks:rank_id (id, name, label, text_color, bg_color, priority),
-      shop_items:equipped_tag_id (id, label, text_color, bg_color)
-    `)
-    .eq('username', username)
-    .single()
+ const { data: profile, error } = await supabase
+  .from('profiles')
+  .select(`
+    *,
+    ranks:rank_id (id, name, label, text_color, bg_color, priority),
+    shop_items!profiles_equipped_tag_id_fkey (id, label, text_color, bg_color)
+  `)
+  .eq('username', username)
+  .single()
+   
+  if (error) console.error('Profile fetch error:', error.message)
 
   if (!profile || !profile.is_verified) notFound()
 
