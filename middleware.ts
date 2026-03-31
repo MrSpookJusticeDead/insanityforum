@@ -34,8 +34,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Exact protected routes — /profile alone (own profile shortcut) requires login
-  // but /profile/username is public
+  // Routes only for logged-in users — redirect to /login if not authed
   const isProtected =
     pathname === '/profile' ||
     pathname.startsWith('/new-post') ||
@@ -45,6 +44,17 @@ export async function middleware(request: NextRequest) {
   if (isProtected && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Routes only for guests — redirect to / if already logged in
+  const isGuestOnly =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup')
+
+  if (isGuestOnly && user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 
