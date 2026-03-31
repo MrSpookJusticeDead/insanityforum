@@ -13,7 +13,7 @@ export default async function Navbar() {
   if (user) {
     const { data } = await supabase
       .from('profiles')
-      .select('username, avatar_url')
+      .select('username, avatar_url, insanities')
       .eq('id', user.id)
       .single()
     profile = data
@@ -39,6 +39,13 @@ export default async function Navbar() {
                 style={{ color: '#e05565' }}
               >
                 Home
+              </Link>
+              <Link
+                href="/shop"
+                className="text-xs uppercase tracking-widest hover:underline"
+                style={{ color: '#e05565' }}
+              >
+                Shop
               </Link>
               <Link
                 href="/users"
@@ -81,6 +88,10 @@ export default async function Navbar() {
                   <span style={{ color: '#2a2a2a' }}>|</span>
                   {/* Notification Bell */}
                   <NotificationBell userId={user.id} />
+                  <span style={{ color: '#2a2a2a' }}>|</span>
+                  <span className="text-xs font-bold" style={{ color: '#e0a550' }}>
+                    {profile?.insanities ?? 0}✦
+                  </span>
                   <span style={{ color: '#2a2a2a' }}>|</span>
                   <Link
                     href="/settings"

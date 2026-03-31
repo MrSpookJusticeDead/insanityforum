@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Avatar from '@/components/Avatar'
-import DeveloperTag from '@/components/DeveloperTag'
+import UserTag from '@/components/UserTag'
 import OnlineStatus from '@/components/OnlineStatus'
-import { isDeveloper } from '@/lib/developer'
+//import { isDeveloper } from '@/lib/developer'
 
 export default async function PublicProfilePage({
   params,
@@ -39,9 +39,17 @@ export default async function PublicProfilePage({
     .select('*', { count: 'exact', head: true })
     .eq('user_id', profile.id)
 
+  const { data: equippedTag } = profile.equipped_tag_id
+    ? await supabase
+      .from('shop_items')
+      .select('label, text_color, bg_color')
+      .eq('id', profile.equipped_tag_id)
+      .single()
+    : { data: null }
+
   const { data: { user } } = await supabase.auth.getUser()
   const isOwnProfile = user?.id === profile.id
-  const dev = isDeveloper(profile.id)
+  //const dev = isDeveloper(profile.id)
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -66,7 +74,13 @@ export default async function PublicProfilePage({
               <h1 className="text-xl font-bold" style={{ color: '#e0e0e0' }}>
                 {profile.username}
               </h1>
-              {dev && <DeveloperTag />}
+              {equippedTag && (
+                <UserTag
+                  label={equippedTag.label}
+                  textColor={equippedTag.text_color}
+                  bgColor={equippedTag.bg_color}
+                />
+              )}
             </div>
             <OnlineStatus
               profileId={profile.id}

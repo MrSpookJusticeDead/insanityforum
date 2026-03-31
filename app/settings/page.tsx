@@ -7,6 +7,17 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AvatarUpload from '@/components/AvatarUpload'
 
+type OwnedTag = {
+  item_id: string
+  shop_items: {
+    id: string
+    name: string
+    label: string
+    text_color: string
+    bg_color: string
+  }
+}
+
 export default function SettingsPage() {
   const [username, setUsername] = useState('')
   const [bio, setBio] = useState('')
@@ -20,6 +31,12 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleteText, setDeleteText] = useState('')
+
+  const [ownedTags, setOwnedTags] = useState<OwnedTag[]>([])
+
+  const [equippedTagId, setEquippedTagId] = useState<string | null>(null)
+  const [tagLoading, setTagLoading] = useState<string | null>(null)
+
   const router = useRouter()
   const supabase = createClient() // back to normal
 
@@ -37,16 +54,47 @@ export default function SettingsPage() {
         .eq('id', user.id)
         .single()
 
+      const { data: tags } = await supabase
+        .from('user_items')
+        .select('item_id, shop_items(id, name, label, text_color, bg_color)')
+        .eq('user_id', user.id)
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('equipped_tag_id')
+        .eq('id', user.id)
+        .single()
+
+
       if (profile) {
         setUsername(profile.username || '')
         setBio(profile.bio || '')
         setAvatarUrl(profile.avatar_url || null)
       }
       setPageLoading(false)
+
+      if (tags) setOwnedTags(tags as unknown as OwnedTag[])
+
+      if (profileData) setEquippedTagId(profileData.equipped_tag_id)
     }
     loadProfile()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const handleEquipTag = async (itemId: string | null) => {
+    setTagLoading(itemId ?? 'unequip')
+    const res = await fetch('/api/equip-tag', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemId }),
+    })
+    if (res.ok) {
+      setEquippedTagId(itemId)
+      setMessage(itemId ? 'Tag equipped!' : 'Tag unequipped!')
+      router.refresh()
+    }
+    setTagLoading(null)
+  }
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -294,6 +342,69 @@ export default function SettingsPage() {
           {loading ? 'Updating...' : 'Update Password'}
         </button>
       </form>
+
+      {/* ===== TAG SECTION ===== */}
+      <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
+
+      <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e0e0e0' }}>
+        Equipped Tag
+      </h2>
+
+      {ownedTags.length === 0 ? (
+        <p className="text-xs mb-8" style={{ color: '#555' }}>
+          You don&apos;t own any tags yet.{' '}
+          <Link href="/shop" style={{ color: '#e05565' }} className="hover:underline">
+            Visit the shop
+          </Link>
+        </p>
+      ) : (
+        <div className="space-y-2 mb-8">
+          <button
+            onClick={() => handleEquipTag(null)}
+            disabled={!equippedTagId || tagLoading === 'unequip'}
+            className="w-full text-left border px-3 py-2 text-xs cursor-pointer disabled:opacity-40"
+            style={{ borderColor: '#2a2a2a', color: '#888' }}
+          >
+            None (unequip)
+            {!equippedTagId && (
+              <span className="ml-2" style={{ color: '#e0a550' }}>✓</span>
+            )}
+          </button>
+          {ownedTags.map((t) => {
+            const tag = t.shop_items
+            const isEquipped = equippedTagId === t.item_id
+            return (
+              <button
+                key={t.item_id}
+                onClick={() => handleEquipTag(t.item_id)}
+                disabled={isEquipped || tagLoading === t.item_id}
+                className="w-full text-left border px-3 py-2 flex items-center gap-3 cursor-pointer disabled:opacity-60"
+                style={{
+                  borderColor: isEquipped ? '#e0a550' : '#2a2a2a',
+                  backgroundColor: isEquipped ? '#1a1500' : 'transparent',
+                }}
+              >
+                <span
+                  className="font-bold uppercase"
+                  style={{
+                    backgroundColor: tag.bg_color,
+                    color: tag.text_color,
+                    fontSize: '9px',
+                    padding: '2px 6px',
+                    letterSpacing: '1.5px',
+                  }}
+                >
+                  {tag.label}
+                </span>
+                <span className="text-xs" style={{ color: '#e0e0e0' }}>{tag.name}</span>
+                {isEquipped && (
+                  <span className="ml-auto text-xs" style={{ color: '#e0a550' }}>✓ Equipped</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* ===== DANGER ZONE ===== */}
       <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
