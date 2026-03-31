@@ -12,9 +12,10 @@ export default function InsanityBalance({
   initialBalance: number
 }) {
   const [balance, setBalance] = useState(initialBalance)
-  const supabase = createClient()
 
   useEffect(() => {
+    const supabase = createClient()
+
     const channel = supabase
       .channel('insanities-' + userId)
       .on(
@@ -26,18 +27,20 @@ export default function InsanityBalance({
           filter: `id=eq.${userId}`,
         },
         (payload) => {
-          const updated = payload.new as { insanities: number }
+          console.log('Profile update received:', payload.new)
+          const updated = payload.new as Record<string, unknown>
           if (typeof updated.insanities === 'number') {
             setBalance(updated.insanities)
           }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('InsanityBalance realtime status:', status)
+      })
 
     return () => {
       supabase.removeChannel(channel)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId])
 
   return (
