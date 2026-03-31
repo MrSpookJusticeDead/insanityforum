@@ -40,6 +40,13 @@ export default async function Navbar() {
               >
                 Home
               </Link>
+              <Link
+                href="/users"
+                className="text-xs uppercase tracking-widest hover:underline"
+                style={{ color: '#e05565' }}
+              >
+                Users
+              </Link>
             </div>
           </div>
 
