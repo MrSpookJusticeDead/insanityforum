@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Avatar from '@/components/Avatar'
 import DeveloperTag from '@/components/DeveloperTag'
+import OnlineStatus from '@/components/OnlineStatus'
 import { isDeveloper } from '@/lib/developer'
 
 export default async function PublicProfilePage({
@@ -66,6 +67,13 @@ export default async function PublicProfilePage({
               </h1>
               {dev && <DeveloperTag />}
             </div>
+
+            {/* Online/Offline status — realtime */}
+            <OnlineStatus
+              profileId={profile.id}
+              initialLastSeen={profile.last_seen ?? null}
+            />
+
             <p className="text-xs mt-1" style={{ color: '#888' }}>
               Joined {new Date(profile.created_at).toLocaleDateString()}
             </p>
