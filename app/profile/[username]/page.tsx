@@ -4,8 +4,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Avatar from '@/components/Avatar'
 import UserTag from '@/components/UserTag'
+import RankTag from '@/components/RankTag'
 import OnlineStatus from '@/components/OnlineStatus'
-//import { isDeveloper } from '@/lib/developer'
 
 export default async function PublicProfilePage({
   params,
@@ -17,11 +17,14 @@ export default async function PublicProfilePage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select(`
+      *,
+      ranks:rank_id (id, name, label, text_color, bg_color, priority),
+      shop_items:equipped_tag_id (id, label, text_color, bg_color)
+    `)
     .eq('username', username)
     .single()
 
-  // No profile or not verified → 404
   if (!profile || !profile.is_verified) notFound()
 
   const { data: posts } = await supabase
@@ -39,17 +42,17 @@ export default async function PublicProfilePage({
     .select('*', { count: 'exact', head: true })
     .eq('user_id', profile.id)
 
-  const { data: equippedTag } = profile.equipped_tag_id
-    ? await supabase
-      .from('shop_items')
-      .select('label, text_color, bg_color')
-      .eq('id', profile.equipped_tag_id)
-      .single()
-    : { data: null }
-
   const { data: { user } } = await supabase.auth.getUser()
   const isOwnProfile = user?.id === profile.id
-  //const dev = isDeveloper(profile.id)
+
+  const rank = profile.ranks as {
+    id: string; name: string; label: string
+    text_color: string; bg_color: string; priority: number
+  } | null
+
+  const equippedTag = profile.shop_items as {
+    id: string; label: string; text_color: string; bg_color: string
+  } | null
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -70,10 +73,19 @@ export default async function PublicProfilePage({
             size={64}
           />
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-xl font-bold" style={{ color: '#e0e0e0' }}>
                 {profile.username}
               </h1>
+              {/* Rank tag — always shown if assigned */}
+              {rank && (
+                <RankTag
+                  label={rank.label}
+                  textColor={rank.text_color}
+                  bgColor={rank.bg_color}
+                />
+              )}
+              {/* Equipped shop tag */}
               {equippedTag && (
                 <UserTag
                   label={equippedTag.label}
@@ -123,6 +135,14 @@ export default async function PublicProfilePage({
           </span>
           <span className="text-xs ml-1" style={{ color: '#888' }}>comments</span>
         </div>
+        {rank && (
+          <div className="border px-4 py-2" style={{ borderColor: '#2a2a2a' }}>
+            <span className="text-xs" style={{ color: '#888' }}>Rank: </span>
+            <span className="text-xs font-bold" style={{ color: rank.text_color }}>
+              {rank.name}
+            </span>
+          </div>
+        )}
       </div>
 
       <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
@@ -134,26 +154,15 @@ export default async function PublicProfilePage({
       {posts && posts.length > 0 ? (
         <div>
           {posts.map((post) => (
-            <div
-              key={post.id}
-              className="border-b py-4"
-              style={{ borderColor: '#2a2a2a' }}
-            >
-              <Link
-                href={`/post/${post.id}`}
-                className="font-bold hover:underline"
-                style={{ color: '#e0e0e0' }}
-              >
+            <div key={post.id} className="border-b py-4" style={{ borderColor: '#2a2a2a' }}>
+              <Link href={`/post/${post.id}`} className="font-bold hover:underline" style={{ color: '#e0e0e0' }}>
                 {post.title}
               </Link>
               <p className="mt-1 text-sm line-clamp-1" style={{ color: '#888' }}>
                 {post.content}
               </p>
               <div className="flex items-center gap-3 mt-2">
-                <span
-                  className="text-xs border px-2 py-0.5"
-                  style={{ color: '#5ec269', borderColor: '#2a2a2a' }}
-                >
+                <span className="text-xs border px-2 py-0.5" style={{ color: '#5ec269', borderColor: '#2a2a2a' }}>
                   {post.categories?.name}
                 </span>
                 <span style={{ color: '#2a2a2a' }}>·</span>
@@ -169,9 +178,7 @@ export default async function PublicProfilePage({
           ))}
         </div>
       ) : (
-        <p className="text-sm py-4" style={{ color: '#555' }}>
-          No posts yet.
-        </p>
+        <p className="text-sm py-4" style={{ color: '#555' }}>No posts yet.</p>
       )}
     </div>
   )

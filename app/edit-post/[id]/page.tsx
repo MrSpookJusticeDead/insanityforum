@@ -63,6 +63,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       setPostLoading(false)
     }
     loadData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   const handleUpdate = async (e: React.FormEvent) => {
