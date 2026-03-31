@@ -70,54 +70,65 @@ export default function ShopClient({ items, profile, ownedItemIds, userId }: Sho
         }
     }, [userId])
 
+// Add this function inside ShopClient
+const updateNavbarBalance = (newBalance: number) => {
+  window.dispatchEvent(new CustomEvent('insanity-balance-update', {
+    detail: { balance: newBalance }
+  }))
+}
+
     const canClaimDaily = () => {
         if (!lastClaim) return true
         const diff = new Date().getTime() - new Date(lastClaim).getTime()
         return diff >= 24 * 60 * 60 * 1000
     }
 
-    const handleDailyClaim = async () => {
-        setClaiming(true)
-        setError(null)
-        setMessage(null)
+   const handleDailyClaim = async () => {
+  setClaiming(true)
+  setError(null)
+  setMessage(null)
 
-        const res = await fetch('/api/daily-claim', { method: 'POST' })
-        const data = await res.json()
+  const res = await fetch('/api/daily-claim', { method: 'POST' })
+  const data = await res.json()
 
-        if (!res.ok) {
-            setError(data.error)
-        } else {
-            setBalance((prev) => prev + 100)
-            setLastClaim(new Date().toISOString())
-            setMessage('+100 Insanities claimed!')
-        }
-        setClaiming(false)
-    }
+  if (!res.ok) {
+    setError(data.error)
+  } else {
+    const newBalance = balance + 100
+    setBalance(newBalance)
+    updateNavbarBalance(newBalance)  // ← add this
+    setLastClaim(new Date().toISOString())
+    setMessage('+100 Insanities claimed!')
+  }
+  setClaiming(false)
+}
 
     const handleBuy = async (item: ShopItem) => {
-        if (purchaseLocked) return  // ← block concurrent purchases
-        setBuying(item.id)
-        setPurchaseLocked(true)     // ← lock all buy buttons
-        setError(null)
-        setMessage(null)
+  if (purchaseLocked) return
+  setBuying(item.id)
+  setPurchaseLocked(true)
+  setError(null)
+  setMessage(null)
 
-        const res = await fetch('/api/buy-item', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ itemId: item.id }),
-        })
-        const data = await res.json()
+  const res = await fetch('/api/buy-item', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ itemId: item.id }),
+  })
+  const data = await res.json()
 
-        if (!res.ok) {
-            setError(data.error)
-        } else {
-            setOwned((prev) => [...prev, item.id])
-            setBalance((prev) => prev - item.price)
-            setMessage(`You purchased the ${item.name} tag!`)
-        }
-        setBuying(null)
-        setPurchaseLocked(false)    // ← unlock after done
-    }
+  if (!res.ok) {
+    setError(data.error)
+  } else {
+    setOwned((prev) => [...prev, item.id])
+    const newBalance = balance - item.price
+    setBalance(newBalance)
+    updateNavbarBalance(newBalance)  // ← add this
+    setMessage(`You purchased the ${item.name} tag!`)
+  }
+  setBuying(null)
+  setPurchaseLocked(false)
+}
 
     const handleEquip = async (itemId: string | null) => {
         setEquipping(itemId ?? 'unequip')
