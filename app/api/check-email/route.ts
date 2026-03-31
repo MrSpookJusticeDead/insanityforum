@@ -20,10 +20,13 @@ export async function POST(request: Request) {
     }
   )
 
-  // Search auth.users for this email
   const { data } = await adminClient.auth.admin.listUsers()
+
+  // Only count users who have confirmed their email
   const exists = data?.users?.some(
-    (u) => u.email?.toLowerCase() === email.toLowerCase()
+    (u) =>
+      u.email?.toLowerCase() === email.toLowerCase() &&
+      u.email_confirmed_at !== null
   )
 
   return NextResponse.json({ exists: !!exists })

@@ -21,7 +21,8 @@ export default async function PublicProfilePage({
     .eq('username', username)
     .single()
 
-  if (!profile) notFound()
+  // No profile or not verified → 404
+  if (!profile || !profile.is_verified) notFound()
 
   const { data: posts } = await supabase
     .from('posts')
@@ -67,13 +68,10 @@ export default async function PublicProfilePage({
               </h1>
               {dev && <DeveloperTag />}
             </div>
-
-            {/* Online/Offline status — realtime */}
             <OnlineStatus
               profileId={profile.id}
               initialLastSeen={profile.last_seen ?? null}
             />
-
             <p className="text-xs mt-1" style={{ color: '#888' }}>
               Joined {new Date(profile.created_at).toLocaleDateString()}
             </p>
