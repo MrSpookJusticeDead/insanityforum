@@ -2,7 +2,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-//import { DEVELOPER_ID } from '@/lib/developer'
 
 export async function POST(request: Request) {
   const { itemId } = await request.json()
@@ -31,60 +30,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Item not found' }, { status: 404 })
   }
 
-  // Check exclusive
+  // Check exclusive access
   if (item.exclusive) {
-  const allowedIds: string[] = item.exclusive_user_ids ?? []
-  if (!allowedIds.includes(user.id)) {
-    return NextResponse.json({ error: 'This tag is exclusive and cannot be purchased' }, { status: 403 })
+    const allowedIds: string[] = item.exclusive_user_ids ?? []
+    if (!allowedIds.includes(user.id)) {
+      return NextResponse.json(
+        { error: 'This tag is exclusive and cannot be purchased' },
+        { status: 403 }
+      )
+    }
   }
-}
 
-  // Check if already owned
-  const { data: existingItem } = await supabase
-    .from('user_items')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('item_id', itemId)
-    .single()
+  const isFreeForOwner = item.exclusive &&
+    (item.exclusive_user_ids ?? []).includes(user.id)
+  const cost = isFreeForOwner ? 0 : item.price
 
-  if (existingItem) {
+  // Atomic purchase — handles race conditions at DB level
+  const { data: result, error } = await adminClient.rpc('purchase_item', {
+    p_user_id: user.id,
+    p_item_id: itemId,
+    p_cost: cost,
+  })
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  if (result === 'already_owned') {
     return NextResponse.json({ error: 'You already own this item' }, { status: 400 })
   }
 
-  // Get profile balance
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('insanities')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile) {
-    return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
-  }
-
-  // Check balance (exclusive dev tag is free)
-const isFreeForOwner = item.exclusive &&
-  (item.exclusive_user_ids ?? []).includes(user.id)
-  if (!isFreeForOwner && profile.insanities < item.price) {
+  if (result === 'insufficient_funds') {
     return NextResponse.json({ error: 'Not enough Insanities' }, { status: 400 })
-  }
-
-  // Deduct currency and add item using admin client
-  const { error: deductError } = await adminClient
-    .from('profiles')
-    .update({ insanities: profile.insanities - (isFreeForOwner ? 0 : item.price) })
-    .eq('id', user.id)
-
-  if (deductError) {
-    return NextResponse.json({ error: deductError.message }, { status: 500 })
-  }
-
-  const { error: insertError } = await adminClient
-    .from('user_items')
-    .insert({ user_id: user.id, item_id: itemId })
-
-  if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })

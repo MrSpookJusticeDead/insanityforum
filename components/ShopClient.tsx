@@ -31,6 +31,7 @@ interface ShopClientProps {
 
 export default function ShopClient({ items, profile, ownedItemIds, userId }: ShopClientProps) {
     const [buying, setBuying] = useState<string | null>(null)
+    const [purchaseLocked, setPurchaseLocked] = useState(false)
     const [equipping, setEquipping] = useState<string | null>(null)
     const [claiming, setClaiming] = useState(false)
     const [message, setMessage] = useState<string | null>(null)
@@ -94,7 +95,9 @@ export default function ShopClient({ items, profile, ownedItemIds, userId }: Sho
     }
 
     const handleBuy = async (item: ShopItem) => {
+        if (purchaseLocked) return  // ← block concurrent purchases
         setBuying(item.id)
+        setPurchaseLocked(true)     // ← lock all buy buttons
         setError(null)
         setMessage(null)
 
@@ -113,6 +116,7 @@ export default function ShopClient({ items, profile, ownedItemIds, userId }: Sho
             setMessage(`You purchased the ${item.name} tag!`)
         }
         setBuying(null)
+        setPurchaseLocked(false)    // ← unlock after done
     }
 
     const handleEquip = async (itemId: string | null) => {
@@ -287,7 +291,7 @@ export default function ShopClient({ items, profile, ownedItemIds, userId }: Sho
                                 ) : (
                                     <button
                                         onClick={() => handleBuy(item)}
-                                        disabled={buying === item.id || (!canAfford && !isExclusiveForMe)}
+                                        disabled={buying === item.id || purchaseLocked || (!canAfford && !isExclusiveForMe)}
                                         className="text-xs uppercase tracking-widest border px-3 py-1 cursor-pointer disabled:opacity-40"
                                         style={{ color: '#5ec269', borderColor: '#5ec269' }}
                                     >
