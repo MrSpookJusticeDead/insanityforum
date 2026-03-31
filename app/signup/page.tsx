@@ -32,6 +32,21 @@ export default function SignUpPage() {
       return
     }
 
+    // Check if email is already registered
+    const emailCheck = await fetch('/api/check-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    const { exists } = await emailCheck.json()
+
+    if (exists) {
+      setError('Someone is already using this email. Try logging in instead.')
+      setLoading(false)
+      return
+    }
+
+    // Proceed with signup
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -41,12 +56,7 @@ export default function SignUpPage() {
     })
 
     if (error) {
-      // Map Supabase error messages to friendly ones
-      if (error.message.toLowerCase().includes('already registered') ||
-          error.message.toLowerCase().includes('already in use') ||
-          error.message.toLowerCase().includes('user already exists')) {
-        setError('This email is already registered. Try logging in instead.')
-      } else if (error.message.toLowerCase().includes('password')) {
+      if (error.message.toLowerCase().includes('password')) {
         setError('Password must be at least 6 characters.')
       } else if (error.message.toLowerCase().includes('email')) {
         setError('Please enter a valid email address.')
@@ -57,14 +67,12 @@ export default function SignUpPage() {
       return
     }
 
-    // Supabase returns a user but with no session when email confirmation is required
     if (data.user && !data.session) {
       setSuccess(true)
       setLoading(false)
       return
     }
 
-    // Edge case: if email confirmation is disabled, session exists immediately
     if (data.session) {
       setSuccess(true)
       setLoading(false)
