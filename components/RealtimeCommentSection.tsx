@@ -7,7 +7,17 @@ import CommentForm from './CommentForm'
 import CommentEditor from './CommentEditor'
 import CommentRenderer from './CommentRenderer'
 import Avatar from './Avatar'
+import RankTag from './RankTag'
+import UserTag from './UserTag'
 import Link from 'next/link'
+
+// ✅ Updated interfaces with tag data
+interface CommentProfile {
+  username: string
+  avatar_url: string | null
+  ranks: { label: string; text_color: string; bg_color: string } | null
+  shop_items: { label: string; text_color: string; bg_color: string } | null
+}
 
 interface Comment {
   id: string
@@ -16,10 +26,7 @@ interface Comment {
   updated_at?: string
   user_id: string
   post_id: string
-  profiles: {
-    username: string
-    avatar_url: string | null
-  } | null
+  profiles: CommentProfile | null
 }
 
 interface RealtimeCommentSectionProps {
@@ -56,15 +63,21 @@ export default function RealtimeCommentSection({
         async (payload) => {
           const newComment = payload.new as Comment
 
+          // ✅ Fetch profile WITH rank and user tag
           const { data: profile } = await supabase
             .from('profiles')
-            .select('username, avatar_url')
+            .select(`
+              username,
+              avatar_url,
+              ranks:rank_id (label, text_color, bg_color),
+              shop_items!profiles_equipped_tag_id_fkey (label, text_color, bg_color)
+            `)
             .eq('id', newComment.user_id)
             .single()
 
           const fullComment: Comment = {
             ...newComment,
-            profiles: profile,
+            profiles: profile as CommentProfile | null,
           }
 
           setComments((prev) => {
@@ -82,7 +95,6 @@ export default function RealtimeCommentSection({
           }, 4000)
         }
       )
-      // Also listen for UPDATE and DELETE
       .on(
         'postgres_changes',
         {
@@ -95,7 +107,9 @@ export default function RealtimeCommentSection({
           const updated = payload.new as Comment
           setComments((prev) =>
             prev.map((c) =>
-              c.id === updated.id ? { ...c, content: updated.content, updated_at: updated.updated_at } : c
+              c.id === updated.id
+                ? { ...c, content: updated.content, updated_at: updated.updated_at }
+                : c
             )
           )
         }
@@ -148,7 +162,6 @@ export default function RealtimeCommentSection({
     if (!res.ok) {
       setError(data.error)
     } else {
-      // Optimistic update
       setComments((prev) =>
         prev.map((c) =>
           c.id === commentId
@@ -179,7 +192,6 @@ export default function RealtimeCommentSection({
     if (!res.ok) {
       setError(data.error)
     } else {
-      // Optimistic update
       setComments((prev) => prev.filter((c) => c.id !== commentId))
     }
 
@@ -210,7 +222,7 @@ export default function RealtimeCommentSection({
           onCommentPosted={(comment) => {
             setComments((prev) => {
               if (prev.some((c) => c.id === comment.id)) return prev
-              return [...prev, comment]
+              return [...prev, comment as Comment]
             })
           }}
         />
@@ -233,6 +245,8 @@ export default function RealtimeCommentSection({
             const isNew = newCommentIds.has(comment.id)
             const isOwner = currentUserId === comment.user_id
             const isEditing = editingId === comment.id
+            const rank = comment.profiles?.ranks
+            const userTag = comment.profiles?.shop_items
 
             return (
               <div
@@ -252,9 +266,9 @@ export default function RealtimeCommentSection({
                   </span>
                 )}
 
-                {/* Header */}
+                {/* ✅ Header with tags */}
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Avatar
                       url={comment.profiles?.avatar_url || null}
                       username={comment.profiles?.username || null}
@@ -267,10 +281,29 @@ export default function RealtimeCommentSection({
                     >
                       {comment.profiles?.username || 'Unknown'}
                     </Link>
+
+                    {/* ✅ Rank Tag */}
+                    {rank && (
+                      <RankTag
+                        label={rank.label}
+                        textColor={rank.text_color}
+                        bgColor={rank.bg_color}
+                      />
+                    )}
+
+                    {/* ✅ User Tag */}
+                    {userTag && (
+                      <UserTag
+                        label={userTag.label}
+                        textColor={userTag.text_color}
+                        bgColor={userTag.bg_color}
+                      />
+                    )}
+
                     <span className="text-xs" style={{ color: '#555' }}>
                       {new Date(comment.created_at).toLocaleString()}
                     </span>
-                    {/*  Show edited indicator */}
+
                     {comment.updated_at && comment.updated_at !== comment.created_at && (
                       <span className="text-xs" style={{ color: '#555' }}>
                         · edited
@@ -278,7 +311,6 @@ export default function RealtimeCommentSection({
                     )}
                   </div>
 
-                  {/*  Edit / Delete buttons for comment owner */}
                   {isOwner && !isEditing && (
                     <div className="flex items-center gap-3">
                       <button
@@ -300,7 +332,6 @@ export default function RealtimeCommentSection({
                   )}
                 </div>
 
-                {/* Content or Edit form */}
                 {isEditing ? (
                   <div className="pl-9">
                     <CommentEditor

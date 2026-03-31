@@ -12,9 +12,15 @@ interface CommentFormProps {
     id: string
     content: string
     created_at: string
+    updated_at?: string
     user_id: string
     post_id: string
-    profiles: { username: string; avatar_url: string | null } | null
+    profiles: {
+      username: string
+      avatar_url: string | null
+      ranks: { label: string; text_color: string; bg_color: string } | null
+      shop_items: { label: string; text_color: string; bg_color: string } | null
+    } | null
   }) => void
 }
 
@@ -34,24 +40,31 @@ export default function CommentForm({ postId, onCommentPosted }: CommentFormProp
 
     const { data: comment, error } = await supabase
       .from('comments')
-      .insert({
-        content,
-        post_id: postId,
-        user_id: user.id,
-      })
-      .select('id, content, created_at, user_id, post_id')
+      .insert({ content, post_id: postId, user_id: user.id })
+      .select('id, content, created_at, updated_at, user_id, post_id')
       .single()
 
     if (!error && comment) {
+      // ✅ Fetch profile with rank and user tag
       const { data: profile } = await supabase
         .from('profiles')
-        .select('username, avatar_url')
+        .select(`
+          username,
+          avatar_url,
+          ranks:rank_id (label, text_color, bg_color),
+          shop_items!profiles_equipped_tag_id_fkey (label, text_color, bg_color)
+        `)
         .eq('id', user.id)
         .single()
 
       onCommentPosted?.({
         ...comment,
-        profiles: profile,
+        profiles: profile as {
+          username: string
+          avatar_url: string | null
+          ranks: { label: string; text_color: string; bg_color: string } | null
+          shop_items: { label: string; text_color: string; bg_color: string } | null
+        } | null,
       })
 
       setContent('')
@@ -63,10 +76,7 @@ export default function CommentForm({ postId, onCommentPosted }: CommentFormProp
 
   return (
     <form onSubmit={handleSubmit} className="mb-6">
-      <div
-        className="flex items-center border-b mb-0"
-        style={{ borderColor: '#2a2a2a' }}
-      >
+      <div className="flex items-center border-b mb-0" style={{ borderColor: '#2a2a2a' }}>
         <button
           type="button"
           onClick={() => setTab('write')}
@@ -92,25 +102,16 @@ export default function CommentForm({ postId, onCommentPosted }: CommentFormProp
       </div>
 
       {tab === 'write' ? (
-        <CommentEditor
-          value={content}
-          onChange={setContent}
-          placeholder="Write a comment..."
-        />
+        <CommentEditor value={content} onChange={setContent} placeholder="Write a comment..." />
       ) : (
         <div
           className="p-3 min-h-24"
-          style={{
-            backgroundColor: '#0e0e0e',
-            border: '1px solid #2a2a2a',
-          }}
+          style={{ backgroundColor: '#0e0e0e', border: '1px solid #2a2a2a' }}
         >
           {content.trim() ? (
             <CommentRenderer content={content} />
           ) : (
-            <p className="text-xs" style={{ color: '#555' }}>
-              Nothing to preview...
-            </p>
+            <p className="text-xs" style={{ color: '#555' }}>Nothing to preview...</p>
           )}
         </div>
       )}

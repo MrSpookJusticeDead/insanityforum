@@ -7,6 +7,8 @@ import MarkdownRenderer from '@/components/MarkdownRenderer'
 import LocalTime from '@/components/LocalTime'
 import Link from 'next/link'
 import BackButton from '@/components/BackButton'
+import RankTag from '@/components/RankTag'
+import UserTag from '@/components/UserTag'
 
 export default async function PostPage({
   params,
@@ -20,7 +22,13 @@ export default async function PostPage({
     .from('posts')
     .select(`
       *,
-      profiles:user_id (username, avatar_url),
+      profiles:user_id (
+        username,
+        avatar_url,
+        equipped_tag_id,
+        ranks:rank_id (label, text_color, bg_color),
+        shop_items!profiles_equipped_tag_id_fkey (label, text_color, bg_color)
+      ),
       categories:category_id (name, slug)
     `)
     .eq('id', id)
@@ -30,17 +38,29 @@ export default async function PostPage({
     notFound()
   }
 
-  const { data: comments } = await supabase
-    .from('comments')
-    .select(`
-      *,
-      profiles:user_id (username, avatar_url)
-    `)
-    .eq('post_id', id)
-    .order('created_at', { ascending: true })
+  const [{ data: comments }, { data: { user } }] = await Promise.all([
+    supabase
+      .from('comments')
+      .select(`
+        *,
+        profiles:user_id (
+          username,
+          avatar_url,
+          equipped_tag_id,
+          ranks:rank_id (label, text_color, bg_color),
+          shop_items!profiles_equipped_tag_id_fkey (label, text_color, bg_color)
+        )
+      `)
+      .eq('post_id', id)
+      .order('created_at', { ascending: true }),
+    supabase.auth.getUser(),
+  ])
 
-  const { data: { user } } = await supabase.auth.getUser()
   const isOwner = user?.id === post.user_id
+
+  // Extract post author tags
+  const postRank = post.profiles?.ranks as { label: string; text_color: string; bg_color: string } | null
+  const postUserTag = post.profiles?.shop_items as { label: string; text_color: string; bg_color: string } | null
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -71,22 +91,39 @@ export default async function PostPage({
           {post.title}
         </h1>
 
-        <div className="flex items-center gap-3 text-xs mb-6">
+        <div className="flex items-center gap-2 text-xs mb-6 flex-wrap">
           <Avatar
             url={post.profiles?.avatar_url}
             username={post.profiles?.username}
             size={24}
           />
-          <span style={{ color: '#888' }}>
-            posted by{' '}
-            <Link
-              href={`/profile/${post.profiles?.username}`}
-              className="hover:underline"
-              style={{ color: '#e05565' }}
-            >
-              {post.profiles?.username}
-            </Link>
-          </span>
+          <span style={{ color: '#888' }}>posted by</span>
+          <Link
+            href={`/profile/${post.profiles?.username}`}
+            className="hover:underline font-bold"
+            style={{ color: '#e05565' }}
+          >
+            {post.profiles?.username}
+          </Link>
+
+          {/* ✅ Rank Tag */}
+          {postRank && (
+            <RankTag
+              label={postRank.label}
+              textColor={postRank.text_color}
+              bgColor={postRank.bg_color}
+            />
+          )}
+
+          {/* ✅ User Tag (equipped shop item) */}
+          {postUserTag && (
+            <UserTag
+              label={postUserTag.label}
+              textColor={postUserTag.text_color}
+              bgColor={postUserTag.bg_color}
+            />
+          )}
+
           <span style={{ color: '#2a2a2a' }}>·</span>
           <span style={{ color: '#555' }}>
             <LocalTime timestamp={post.created_at} />
