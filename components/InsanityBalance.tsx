@@ -16,6 +16,20 @@ export default function InsanityBalance({
   useEffect(() => {
     const supabase = createClient()
 
+    // Fetch latest balance from DB
+    const fetchBalance = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('insanities')
+        .eq('id', userId)
+        .single()
+
+      if (data && typeof data.insanities === 'number') {
+        setBalance(data.insanities)
+      }
+    }
+
+    // Try realtime first
     const channel = supabase
       .channel('insanities-' + userId)
       .on(
@@ -27,7 +41,6 @@ export default function InsanityBalance({
           filter: `id=eq.${userId}`,
         },
         (payload) => {
-          console.log('Profile update received:', payload.new)
           const updated = payload.new as Record<string, unknown>
           if (typeof updated.insanities === 'number') {
             setBalance(updated.insanities)
@@ -38,8 +51,12 @@ export default function InsanityBalance({
         console.log('InsanityBalance realtime status:', status)
       })
 
+    // Poll every 30 seconds as fallback
+    const interval = setInterval(fetchBalance, 30000)
+
     return () => {
       supabase.removeChannel(channel)
+      clearInterval(interval)
     }
   }, [userId])
 
