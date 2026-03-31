@@ -20,9 +20,16 @@ export async function POST(request: Request) {
     }
   )
 
-  const { data } = await adminClient.auth.admin.listUsers()
+  // Use listUsers with a filter instead of fetching all
+  const { data, error } = await adminClient.auth.admin.listUsers({
+    perPage: 1000,
+  })
 
-  const user = data?.users?.find(
+  if (error || !data) {
+    return NextResponse.json({ exists: false, verified: false })
+  }
+
+  const user = data.users.find(
     (u) => u.email?.toLowerCase() === email.toLowerCase()
   )
 
@@ -30,8 +37,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ exists: false, verified: false })
   }
 
+  // Log for debugging
+  console.log('Found user:', {
+    email: user.email,
+    email_confirmed_at: user.email_confirmed_at,
+    confirmed: !!user.email_confirmed_at,
+  })
+
+  const verified = !!user.email_confirmed_at
+
   return NextResponse.json({
     exists: true,
-    verified: user.email_confirmed_at !== null,
+    verified,
   })
 }

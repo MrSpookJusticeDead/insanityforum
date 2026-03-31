@@ -39,7 +39,9 @@ export default function SignUpPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     })
-    const { exists, verified } = await emailCheck.json()
+    const result = await emailCheck.json()
+    console.log('Email check result:', result)
+    const { exists, verified } = result
 
     // Email exists and is verified → already a full account
     if (exists && verified) {
