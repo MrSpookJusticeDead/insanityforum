@@ -9,6 +9,7 @@ interface BackButtonProps {
 }
 
 export default function BackButton({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   fallbackHref = '/',
   fallbackLabel = 'Back',
 }: BackButtonProps) {
