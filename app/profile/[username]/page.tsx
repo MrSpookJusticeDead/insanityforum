@@ -6,6 +6,7 @@ import Avatar from '@/components/Avatar'
 import UserTag from '@/components/UserTag'
 import RankTag from '@/components/RankTag'
 import OnlineStatus from '@/components/OnlineStatus'
+import LocalTime from '@/components/LocalTime'
 
 export default async function PublicProfilePage({
   params,
@@ -167,7 +168,7 @@ export default async function PublicProfilePage({
                 </span>
                 <span style={{ color: '#2a2a2a' }}>·</span>
                 <span className="text-xs" style={{ color: '#555' }}>
-                  {new Date(post.created_at).toLocaleDateString()}
+                  <LocalTime timestamp={post.created_at} showTime={false} />
                 </span>
                 <span style={{ color: '#2a2a2a' }}>·</span>
                 <span className="text-xs" style={{ color: '#888' }}>
