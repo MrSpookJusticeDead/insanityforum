@@ -4,9 +4,10 @@
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+//import Link from 'next/link'
 import EditorWithPreview from '@/components/EditorWithPreview'
 import { hasRequiredRank, Rank } from '@/lib/ranks'
+import BackButton from '@/components/BackButton'
 
 interface Category {
   id: string
@@ -99,9 +100,7 @@ export default function NewPostPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Link href="/" className="text-xs uppercase tracking-widest hover:underline inline-block mb-6" style={{ color: '#888' }}>
-        ← Back to posts
-      </Link>
+      <BackButton fallbackHref="/" fallbackLabel="Back" />
 
       <h1 className="text-xl font-bold mb-6" style={{ color: '#e0e0e0' }}>New Post</h1>
 

@@ -6,6 +6,7 @@ import Avatar from '@/components/Avatar'
 import MarkdownRenderer from '@/components/MarkdownRenderer'
 import LocalTime from '@/components/LocalTime'
 import Link from 'next/link'
+import BackButton from '@/components/BackButton'
 
 export default async function PostPage({
   params,
@@ -43,13 +44,7 @@ export default async function PostPage({
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Link
-        href="/"
-        className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
-        style={{ color: '#888' }}
-      >
-        ← Back to posts
-      </Link>
+      <BackButton fallbackHref="/" fallbackLabel="Back" />
 
       <article>
         <div className="flex items-center justify-between mb-4">

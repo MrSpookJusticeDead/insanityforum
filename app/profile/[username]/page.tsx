@@ -7,6 +7,7 @@ import UserTag from '@/components/UserTag'
 import RankTag from '@/components/RankTag'
 import OnlineStatus from '@/components/OnlineStatus'
 import LocalTime from '@/components/LocalTime'
+import BackButton from '@/components/BackButton'
 
 export default async function PublicProfilePage({
   params,
@@ -57,13 +58,7 @@ export default async function PublicProfilePage({
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Link
-        href="/"
-        className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
-        style={{ color: '#888' }}
-      >
-        ← Back to posts
-      </Link>
+      <BackButton fallbackHref="/" fallbackLabel="Back" />
 
       {/* Profile Header */}
       <div className="flex items-start justify-between mb-6">

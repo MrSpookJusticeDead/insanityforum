@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import LocalTime from '@/components/LocalTime'
 import Link from 'next/link'
+import BackButton from '@/components/BackButton'
 
 export default async function CategoryPage({
   params,
@@ -33,13 +34,7 @@ export default async function CategoryPage({
   return (
     <div>
       {/* Back link */}
-      <Link
-        href="/"
-        className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
-        style={{ color: '#888' }}
-      >
-        ← Back to posts
-      </Link>
+      <BackButton fallbackHref="/" fallbackLabel="Back" />
 
       <h1 className="text-xl font-bold mb-1" style={{ color: '#e0e0e0' }}>
         {category.name}

@@ -4,8 +4,9 @@
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, use } from 'react'
-import Link from 'next/link'
+//import Link from 'next/link'
 import EditorWithPreview from '@/components/EditorWithPreview'
+import BackButton from '@/components/BackButton'
 
 interface Category {
   id: string
@@ -126,13 +127,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Link
-        href="/"
-        className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
-        style={{ color: '#888' }}
-      >
-        ← Back to posts
-      </Link>
+      <BackButton fallbackHref="/" fallbackLabel="Back" />
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold" style={{ color: '#e0e0e0' }}>

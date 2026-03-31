@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AvatarUpload from '@/components/AvatarUpload'
+import BackButton from '@/components/BackButton'
 
 type OwnedTag = {
   item_id: string
@@ -194,14 +195,8 @@ export default function SettingsPage() {
   return (
     <div className="max-w-lg mx-auto">
       {/* Back link */}
-      <Link
-        href="/profile"
-        className="text-xs uppercase tracking-widest hover:underline inline-block mb-6"
-        style={{ color: '#888' }}
-      >
-        ← Back to profile
-      </Link>
-
+      <BackButton fallbackHref="/profile" fallbackLabel="Back" />
+      
       <h1 className="text-xl font-bold mb-6" style={{ color: '#e0e0e0' }}>
         Account Settings
       </h1>
