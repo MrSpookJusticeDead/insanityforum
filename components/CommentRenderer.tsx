@@ -47,14 +47,11 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 
 //  New VideoPlayer component
 function VideoPlayer({ src, title }: { src: string; title: string }) {
-  // ✅ Parse: "filename =500 center" or "filename =500x300" or "filename =500"
-  const centerMatch = title.match(/\bcenter\b/)
-  const sizeMatch = title.match(/=(\d+)(?:x(\d+))?/)
-  const cleanTitle = title
-    .replace(/\s*=\d+(?:x\d+)?/, '')
-    .replace(/\s*center\b/, '')
-    .trim()
+  // ✅ Parse size from title: "filename =640x360" or "filename =640"
+  const sizeMatch = title.match(/\s*=(\d+)(?:x(\d+))?$/)
+  const cleanTitle = title.replace(/\s*=\d+(?:x\d+)?$/, '')
 
+  // Default for comments
   let maxWidth = 400
   let maxHeight: number | undefined = undefined
 
@@ -63,46 +60,30 @@ function VideoPlayer({ src, title }: { src: string; title: string }) {
     if (sizeMatch[2]) maxHeight = parseInt(sizeMatch[2], 10)
   }
 
+  // ✅ Enforce comment limits
   maxWidth = Math.min(maxWidth, 500)
   if (maxHeight) maxHeight = Math.min(maxHeight, 400)
 
-  const centered = !!centerMatch
-
   return (
-    // ✅ inline-block so container wraps the video tightly
-    <span
-      className="my-2"
-      style={{
-        display: 'block',
-        textAlign: centered ? 'center' : 'left',
-      }}
-    >
-      <span
+    <div className="my-2 border p-2" style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}>
+      <p className="text-xs mb-1" style={{ color: '#a78bfa' }}>🎬 {cleanTitle}</p>
+      <video
+        controls
         style={{
-          display: 'inline-block',
+          width: '100%',
+          maxWidth: `${maxWidth}px`,
+          maxHeight: maxHeight ? `${maxHeight}px` : '300px',
           border: '1px solid #2a2a2a',
-          backgroundColor: '#1a1a1a',
-          padding: '8px',
+          display: 'block',
         }}
       >
-        <span className="flex items-center gap-1 mb-1" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-          <span className="text-xs" style={{ color: '#a78bfa' }}>🎬</span>
-          <span className="text-xs" style={{ color: '#a78bfa' }}>{cleanTitle}</span>
-        </span>
-        <video
-          controls
-          style={{
-            display: 'block',
-            width: `${maxWidth}px`,
-            maxWidth: '100%',
-            maxHeight: maxHeight ? `${maxHeight}px` : undefined,
-          }}
-        >
-          <source src={src} />
-          Your browser does not support video.
-        </video>
-      </span>
-    </span>
+        <source src={src} />
+        Your browser does not support video.
+      </video>
+      <p className="text-xs mt-1" style={{ color: '#555' }}>
+        {maxWidth}px{maxHeight ? ` × ${maxHeight}px` : ''}
+      </p>
+    </div>
   )
 }
 
