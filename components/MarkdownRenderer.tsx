@@ -28,19 +28,44 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 }
 
 function VideoPlayer({ src, title }: { src: string; title: string }) {
-    return (
-        <div className="my-3 border p-3" style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}>
-            <p className="text-xs mb-2" style={{ color: '#a78bfa' }}>🎬 {title}</p>
-            <video
-                controls
-                className="w-full"
-                style={{ maxHeight: '400px', border: '1px solid #2a2a2a' }}
-            >
-                <source src={src} />
-                Your browser does not support video.
-            </video>
-        </div>
-    )
+  // ✅ Parse size from title: "filename =640x360" or "filename =640"
+  const sizeMatch = title.match(/\s*=(\d+)(?:x(\d+))?$/)
+  const cleanTitle = title.replace(/\s*=\d+(?:x\d+)?$/, '')
+
+  // Default for posts
+  let maxWidth = 640
+  let maxHeight: number | undefined = undefined
+
+  if (sizeMatch) {
+    maxWidth = parseInt(sizeMatch[1], 10)
+    if (sizeMatch[2]) maxHeight = parseInt(sizeMatch[2], 10)
+  }
+
+  // ✅ Enforce post limits
+  maxWidth = Math.min(maxWidth, 800)
+  if (maxHeight) maxHeight = Math.min(maxHeight, 600)
+
+  return (
+    <div className="my-3 border p-3" style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}>
+      <p className="text-xs mb-2" style={{ color: '#a78bfa' }}>🎬 {cleanTitle}</p>
+      <video
+        controls
+        style={{
+          width: '100%',
+          maxWidth: `${maxWidth}px`,
+          maxHeight: maxHeight ? `${maxHeight}px` : '450px',
+          border: '1px solid #2a2a2a',
+          display: 'block',
+        }}
+      >
+        <source src={src} />
+        Your browser does not support video.
+      </video>
+      <p className="text-xs mt-1" style={{ color: '#555' }}>
+        {maxWidth}px{maxHeight ? ` × ${maxHeight}px` : ''}
+      </p>
+    </div>
+  )
 }
 
 // Custom image with error handling

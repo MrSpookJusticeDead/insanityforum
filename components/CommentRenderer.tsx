@@ -47,17 +47,42 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 
 //  New VideoPlayer component
 function VideoPlayer({ src, title }: { src: string; title: string }) {
+  // ✅ Parse size from title: "filename =640x360" or "filename =640"
+  const sizeMatch = title.match(/\s*=(\d+)(?:x(\d+))?$/)
+  const cleanTitle = title.replace(/\s*=\d+(?:x\d+)?$/, '')
+
+  // Default for comments
+  let maxWidth = 400
+  let maxHeight: number | undefined = undefined
+
+  if (sizeMatch) {
+    maxWidth = parseInt(sizeMatch[1], 10)
+    if (sizeMatch[2]) maxHeight = parseInt(sizeMatch[2], 10)
+  }
+
+  // ✅ Enforce comment limits
+  maxWidth = Math.min(maxWidth, 500)
+  if (maxHeight) maxHeight = Math.min(maxHeight, 400)
+
   return (
     <div className="my-2 border p-2" style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}>
-      <p className="text-xs mb-1" style={{ color: '#a78bfa' }}>🎬 {title}</p>
+      <p className="text-xs mb-1" style={{ color: '#a78bfa' }}>🎬 {cleanTitle}</p>
       <video
         controls
-        className="w-full"
-        style={{ maxHeight: '300px', border: '1px solid #2a2a2a' }}
+        style={{
+          width: '100%',
+          maxWidth: `${maxWidth}px`,
+          maxHeight: maxHeight ? `${maxHeight}px` : '300px',
+          border: '1px solid #2a2a2a',
+          display: 'block',
+        }}
       >
         <source src={src} />
         Your browser does not support video.
       </video>
+      <p className="text-xs mt-1" style={{ color: '#555' }}>
+        {maxWidth}px{maxHeight ? ` × ${maxHeight}px` : ''}
+      </p>
     </div>
   )
 }

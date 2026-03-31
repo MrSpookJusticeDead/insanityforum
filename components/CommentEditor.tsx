@@ -97,18 +97,19 @@ export default function CommentEditor({ value, onChange, placeholder }: CommentE
   }
 
   // ✅ New video handler
-  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime']
-    if (!allowedTypes.includes(file.type)) {
-      setUploadError('Only MP4, WebM, OGG, and MOV are allowed')
-      return
-    }
-    const url = await uploadFile(file)
-    if (url) insertAtCursor(`\n[video:${file.name}](${url})\n`)
-    if (videoInputRef.current) videoInputRef.current.value = ''
+const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime']
+  if (!allowedTypes.includes(file.type)) {
+    setUploadError('Only MP4, WebM, OGG, and MOV are allowed')
+    return
   }
+  const url = await uploadFile(file)
+  // ✅ Auto-insert at max comment size (500px), no prompt
+  if (url) insertAtCursor(`\n[video:${file.name} =500](${url})\n`)
+  if (videoInputRef.current) videoInputRef.current.value = ''
+}
 
   const btnStyle = { color: '#888', borderColor: '#2a2a2a' }
 

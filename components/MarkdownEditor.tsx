@@ -126,26 +126,14 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
     if (!allowedTypes.includes(file.type)) {
       setUploadError('Only JPG, PNG, GIF, and WebP are allowed')
       return
     }
-
     const url = await uploadFile(file)
-    if (url) {
-      const size = prompt(
-        'Enter image size (e.g., 300x200 or just 300 for width).\nLeave empty for full size (max 200px).',
-        '200'
-      )
-
-      if (size !== null) {
-        const altText = size.trim() ? `${file.name} =${size.trim()}` : file.name
-        insertAtCursor(`\n![${altText}](${url})\n`, '', '')
-      }
-    }
-
+    // ✅ Auto-insert at max post image size (200px), no prompt
+    if (url) insertAtCursor(`\n![${file.name} =200](${url})\n`, '', '')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -176,7 +164,8 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
       return
     }
     const url = await uploadFile(file)
-    if (url) insertAtCursor(`\n[video:${file.name}](${url})\n`, '', '')
+    // ✅ Auto-insert at max post size (800px), no prompt
+    if (url) insertAtCursor(`\n[video:${file.name} =800](${url})\n`, '', '')
     if (videoInputRef.current) videoInputRef.current.value = ''
   }
 
