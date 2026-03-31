@@ -21,7 +21,8 @@ export default function SettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleteText, setDeleteText] = useState('')
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = createClient() // back to normal
+
 
   useEffect(() => {
     async function loadProfile() {
@@ -44,6 +45,7 @@ export default function SettingsPage() {
       setPageLoading(false)
     }
     loadProfile()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
