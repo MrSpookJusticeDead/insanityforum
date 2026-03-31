@@ -1,10 +1,11 @@
 // components/ShopClient.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import UserTag from './UserTag'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 interface ShopItem {
     id: string
@@ -39,6 +40,34 @@ export default function ShopClient({ items, profile, ownedItemIds, userId }: Sho
     const [owned, setOwned] = useState<string[]>(ownedItemIds)
     const [lastClaim, setLastClaim] = useState(profile?.last_daily_claim ?? null)
     const router = useRouter()
+
+    useEffect(() => {
+        if (!userId) return
+        const supabase = createClient()
+
+        const channel = supabase
+            .channel('shop-balance-' + userId)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'profiles',
+                    filter: `id=eq.${userId}`,
+                },
+                (payload) => {
+                    const updated = payload.new as { insanities: number }
+                    if (typeof updated.insanities === 'number') {
+                        setBalance(updated.insanities)
+                    }
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [userId])
 
     const canClaimDaily = () => {
         if (!lastClaim) return true

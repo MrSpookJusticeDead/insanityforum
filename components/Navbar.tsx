@@ -4,6 +4,7 @@ import Link from 'next/link'
 import LogoutButton from './LogoutButton'
 import Avatar from './Avatar'
 import NotificationBell from './NotificationBell'
+import InsanityBalance from './InsanityBalance'
 
 export default async function Navbar() {
   const supabase = await createClient()
@@ -89,9 +90,10 @@ export default async function Navbar() {
                   {/* Notification Bell */}
                   <NotificationBell userId={user.id} />
                   <span style={{ color: '#2a2a2a' }}>|</span>
-                  <span className="text-xs font-bold" style={{ color: '#e0a550' }}>
-                    {profile?.insanities ?? 0}✦
-                  </span>
+                  <InsanityBalance
+                    userId={user.id}
+                    initialBalance={profile?.insanities ?? 0}
+                  />
                   <span style={{ color: '#2a2a2a' }}>|</span>
                   <Link
                     href="/settings"
