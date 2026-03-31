@@ -11,20 +11,36 @@ interface MarkdownRendererProps {
 
 // Custom audio component
 function AudioPlayer({ src, title }: { src: string; title: string }) {
-  return (
-    <div
-      className="my-3 border p-3"
-      style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}
-    >
-      <p className="text-xs mb-2" style={{ color: '#e0a550' }}>
-        🎵 {title}
-      </p>
-      <audio controls className="w-full md:w-3/5" style={{ height: '37px' }}>
-        <source src={src} />
-        Your browser does not support audio.
-      </audio>
-    </div>
-  )
+    return (
+        <div
+            className="my-3 border p-3"
+            style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}
+        >
+            <p className="text-xs mb-2" style={{ color: '#e0a550' }}>
+                🎵 {title}
+            </p>
+            <audio controls className="w-full md:w-3/5" style={{ height: '37px' }}>
+                <source src={src} />
+                Your browser does not support audio.
+            </audio>
+        </div>
+    )
+}
+
+function VideoPlayer({ src, title }: { src: string; title: string }) {
+    return (
+        <div className="my-3 border p-3" style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}>
+            <p className="text-xs mb-2" style={{ color: '#a78bfa' }}>🎬 {title}</p>
+            <video
+                controls
+                className="w-full"
+                style={{ maxHeight: '400px', border: '1px solid #2a2a2a' }}
+            >
+                <source src={src} />
+                Your browser does not support video.
+            </video>
+        </div>
+    )
 }
 
 // Custom image with error handling
@@ -83,19 +99,19 @@ function MarkdownImage({ src, alt }: { src: string; alt: string }) {
 
 export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
     // Pre-process content to handle audio tags: [audio:name](url)
-    const processedContent = content.replace(
-        /\[audio:([^\]]*)\]\(([^)]+)\)/g,
-        '%%%AUDIO|||$1|||$2%%%'
-    )
+    const processedContent = content
+        .replace(/\[audio:([^\]]*)\]\(([^)]+)\)/g, '%%%AUDIO|||$1|||$2%%%')
+        .replace(/\[video:([^\]]*)\]\(([^)]+)\)/g, '%%%VIDEO|||$1|||$2%%%')
 
     // Split content by audio markers
-    const parts = processedContent.split(/(%%%AUDIO\|\|\|[^%]+%%%)/g)
+    const parts = processedContent.split(/(%%%(?:AUDIO|VIDEO)\|\|\|[^%]+%%%)/g) // update regex
 
     return (
         <div className="markdown-content">
             {parts.map((part, index) => {
                 // Check if this part is an audio marker
                 const audioMatch = part.match(/%%%AUDIO\|\|\|(.+?)\|\|\|(.+?)%%%/)
+                const videoMatch = part.match(/%%%VIDEO\|\|\|(.+?)\|\|\|(.+?)%%%/)
                 if (audioMatch) {
                     return (
                         <AudioPlayer
@@ -104,6 +120,9 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
                             src={audioMatch[2]}
                         />
                     )
+                }
+                if (videoMatch) {
+                    return <VideoPlayer key={index} title={videoMatch[1]} src={videoMatch[2]} />
                 }
 
                 // Render markdown

@@ -16,6 +16,7 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const audioInputRef = useRef<HTMLInputElement>(null)
+  const videoInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
   const insertAtCursor = (before: string, after: string = '', insertPlaceholder: string = '') => {
@@ -85,8 +86,8 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
         return null
       }
 
-      if (file.size > 10 * 1024 * 1024) {
-        setUploadError('File must be less than 10MB')
+      if (file.size > 20 * 1024 * 1024) {
+        setUploadError('File must be less than 20MB')
         setUploading(false)
         return null
       }
@@ -164,6 +165,19 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
     }
 
     if (audioInputRef.current) audioInputRef.current.value = ''
+  }
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime']
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError('Only MP4, WebM, OGG, and MOV are allowed')
+      return
+    }
+    const url = await uploadFile(file)
+    if (url) insertAtCursor(`\n[video:${file.name}](${url})\n`, '', '')
+    if (videoInputRef.current) videoInputRef.current.value = ''
   }
 
   const btnStyle = {
@@ -335,6 +349,23 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
           ImgURL
         </button>
 
+        {/*  Video upload  */}
+        <label
+          className="px-2 py-1 text-xs border cursor-pointer hover:bg-gray-800 transition-colors"
+          style={{ ...btnStyle, color: uploading ? '#555' : '#a78bfa', borderColor: uploading ? '#2a2a2a' : '#a78bfa' }}
+          title="Upload Video"
+        >
+          {uploading ? '...' : 'Video'}
+          <input
+            ref={videoInputRef}
+            type="file"
+            accept="video/mp4,video/webm,video/ogg,video/quicktime"
+            onChange={handleVideoUpload}
+            disabled={uploading}
+            className="hidden"
+          />
+        </label>
+
         <label
           className="px-2 py-1 text-xs border cursor-pointer hover:bg-gray-800 transition-colors"
           style={{ ...btnStyle, color: '#e0a550', borderColor: '#e0a550' }}
@@ -350,6 +381,8 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
             className="hidden"
           />
         </label>
+
+
       </div>
 
       {uploadError && (
