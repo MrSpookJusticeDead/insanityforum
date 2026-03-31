@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import RealtimeCommentSection from '@/components/RealtimeCommentSection'
 import Avatar from '@/components/Avatar'
 import MarkdownRenderer from '@/components/MarkdownRenderer'
+import LocalTime from '@/components/LocalTime'
 import Link from 'next/link'
 
 export default async function PostPage({
@@ -93,7 +94,7 @@ export default async function PostPage({
           </span>
           <span style={{ color: '#2a2a2a' }}>·</span>
           <span style={{ color: '#555' }}>
-            {new Date(post.created_at).toLocaleString()}
+            <LocalTime timestamp={post.created_at} />
           </span>
           {post.updated_at !== post.created_at && (
             <>

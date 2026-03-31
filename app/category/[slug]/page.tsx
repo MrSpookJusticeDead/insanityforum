@@ -1,6 +1,7 @@
 // app/category/[slug]/page.tsx
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import LocalTime from '@/components/LocalTime'
 import Link from 'next/link'
 
 export default async function CategoryPage({
@@ -74,7 +75,7 @@ export default async function CategoryPage({
                   </span>
                   <span style={{ color: '#2a2a2a' }}>·</span>
                   <span className="text-xs" style={{ color: '#555' }}>
-                    {new Date(post.created_at).toLocaleDateString()}
+                    <LocalTime timestamp={post.created_at} showTime={false} />
                   </span>
                 </div>
               </div>
