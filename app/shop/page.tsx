@@ -6,35 +6,40 @@ export default async function ShopPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Run items fetch always, user queries in parallel if logged in
+  if (user) {
+    // All 3 queries at the same time ✅
+    const [itemsRes, profileRes, ownedRes] = await Promise.all([
+      supabase.from('shop_items').select('*').order('price', { ascending: true }),
+      supabase.from('profiles').select('insanities, equipped_tag_id, last_daily_claim').eq('id', user.id).single(),
+      supabase.from('user_items').select('item_id').eq('user_id', user.id),
+    ])
+
+    return (
+      <ShopClient
+        items={itemsRes.data || []}
+        profile={profileRes.data}
+        ownedItemIds={ownedRes.data?.map((o) => o.item_id) || []}
+        userId={user.id}
+      />
+    )
+  }
+
+  // Not logged in — only fetch items
   const { data: items } = await supabase
     .from('shop_items')
     .select('*')
     .order('price', { ascending: true })
 
-  let profile = null
-  let ownedItemIds: string[] = []
-
-  if (user) {
-    const { data: p } = await supabase
-      .from('profiles')
-      .select('insanities, equipped_tag_id, last_daily_claim')
-      .eq('id', user.id)
-      .single()
-    profile = p
-
-    const { data: owned } = await supabase
-      .from('user_items')
-      .select('item_id')
-      .eq('user_id', user.id)
-    ownedItemIds = owned?.map((o) => o.item_id) || []
-  }
-
   return (
     <ShopClient
       items={items || []}
-      profile={profile}
-      ownedItemIds={ownedItemIds}
-      userId={user?.id}
+      profile={null}
+      ownedItemIds={[]}
+      userId={undefined}
     />
   )
 }
+
+// Cache shop items for 60 seconds
+export const revalidate = 60

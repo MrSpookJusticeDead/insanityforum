@@ -6,20 +6,13 @@ import Avatar from './Avatar'
 import NotificationBell from './NotificationBell'
 import InsanityBalance from './InsanityBalance'
 import MobileMenu from './MobileMenu'
+import { getNavbarProfile } from '@/lib/supabase/getNavbarProfile'
 
 export default async function Navbar() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let profile = null
-  if (user) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('username, avatar_url, insanities')
-      .eq('id', user.id)
-      .single()
-    profile = data
-  }
+  const profile = user ? await getNavbarProfile(user.id) : null
 
   return (
     <nav className="border-b" style={{ borderColor: '#2a2a2a' }}>
