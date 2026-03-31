@@ -45,50 +45,72 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
   )
 }
 
-//  New VideoPlayer component
 function VideoPlayer({ src, title }: { src: string; title: string }) {
-  // ✅ Parse size from title: "filename =640x360" or "filename =640"
-  const sizeMatch = title.match(/\s*=(\d+)(?:x(\d+))?$/)
-  const cleanTitle = title.replace(/\s*=\d+(?:x\d+)?$/, '')
+  // Parse "center" keyword
+  const centered = /\bcenter\b/.test(title)
+  // Parse size: =500 or =500x300
+  const sizeMatch = title.match(/=(\d+)(?:x(\d+))?/)
+  const cleanTitle = title
+    .replace(/\s*=\d+(?:x\d+)?/, '')
+    .replace(/\s*\bcenter\b/, '')
+    .trim()
 
-  // Default for comments
-  let maxWidth = 400
+  let width = 500
   let maxHeight: number | undefined = undefined
 
   if (sizeMatch) {
-    maxWidth = parseInt(sizeMatch[1], 10)
+    width = parseInt(sizeMatch[1], 10)
     if (sizeMatch[2]) maxHeight = parseInt(sizeMatch[2], 10)
   }
 
-  // ✅ Enforce comment limits
-  maxWidth = Math.min(maxWidth, 500)
+  // Enforce comment limits
+  width = Math.min(width, 500)
   if (maxHeight) maxHeight = Math.min(maxHeight, 400)
 
   return (
-    <div className="my-2 border p-2" style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}>
-      <p className="text-xs mb-1" style={{ color: '#a78bfa' }}>🎬 {cleanTitle}</p>
-      <video
-        controls
+    <span
+      style={{
+        display: 'block',
+        margin: '8px 0',
+        textAlign: centered ? ('center' as const) : ('left' as const),
+      }}
+    >
+      <span
         style={{
-          width: '100%',
-          maxWidth: `${maxWidth}px`,
-          maxHeight: maxHeight ? `${maxHeight}px` : '300px',
+          display: 'inline-block',
           border: '1px solid #2a2a2a',
-          display: 'block',
+          backgroundColor: '#1a1a1a',
+          padding: '8px',
         }}
       >
-        <source src={src} />
-        Your browser does not support video.
-      </video>
-      <p className="text-xs mt-1" style={{ color: '#555' }}>
-        {maxWidth}px{maxHeight ? ` × ${maxHeight}px` : ''}
-      </p>
-    </div>
+        <span
+          style={{
+            display: 'block',
+            fontSize: '11px',
+            color: '#a78bfa',
+            marginBottom: '6px',
+          }}
+        >
+          🎬 {cleanTitle}
+        </span>
+        <video
+          controls
+          style={{
+            display: 'block',
+            width: `${width}px`,
+            maxWidth: '100%',
+            maxHeight: maxHeight ? `${maxHeight}px` : undefined,
+          }}
+        >
+          <source src={src} />
+          Your browser does not support video.
+        </video>
+      </span>
+    </span>
   )
 }
 
 export default function CommentRenderer({ content }: CommentRendererProps) {
-  //  Process both audio and video tags
   const processedContent = content
     .replace(/\[audio:([^\]]*)\]\(([^)]+)\)/g, '%%%AUDIO|||$1|||$2%%%')
     .replace(/\[video:([^\]]*)\]\(([^)]+)\)/g, '%%%VIDEO|||$1|||$2%%%')
@@ -103,7 +125,6 @@ export default function CommentRenderer({ content }: CommentRendererProps) {
           return <AudioPlayer key={index} title={audioMatch[1]} src={audioMatch[2]} />
         }
 
-        //  Handle video
         const videoMatch = part.match(/%%%VIDEO\|\|\|(.+?)\|\|\|(.+?)%%%/)
         if (videoMatch) {
           return <VideoPlayer key={index} title={videoMatch[1]} src={videoMatch[2]} />
