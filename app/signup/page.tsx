@@ -12,6 +12,7 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [resent, setResent] = useState(false)
   const supabase = createClient()
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -32,21 +33,41 @@ export default function SignUpPage() {
       return
     }
 
-    // Check if email is already registered
+    // Check if email exists and its verification status
     const emailCheck = await fetch('/api/check-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     })
-    const { exists } = await emailCheck.json()
+    const { exists, verified } = await emailCheck.json()
 
-    if (exists) {
+    // Email exists and is verified → already a full account
+    if (exists && verified) {
       setError('Someone is already using this email. Try logging in instead.')
       setLoading(false)
       return
     }
 
-    // Proceed with signup
+    // Email exists but NOT verified → resend confirmation email
+    if (exists && !verified) {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      })
+
+      if (resendError) {
+        setError('Failed to resend confirmation email. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      setResent(true)
+      setSuccess(true)
+      setLoading(false)
+      return
+    }
+
+    // New email — proceed with signup
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -79,7 +100,7 @@ export default function SignUpPage() {
     }
   }
 
-  // Success state — show verify email message
+  // Success state
   if (success) {
     return (
       <div className="max-w-sm mx-auto mt-20">
@@ -94,14 +115,26 @@ export default function SignUpPage() {
           style={{ borderColor: '#5ec269' }}
         >
           <p className="text-sm mb-2" style={{ color: '#5ec269' }}>
-            ✓ Account created successfully
+            {resent ? '↻ Confirmation email resent' : '✓ Account created successfully'}
           </p>
           <p className="text-xs" style={{ color: '#888' }}>
-            We sent a confirmation email to{' '}
+            {resent
+              ? 'We resent the confirmation email to '
+              : 'We sent a confirmation email to '}
             <span style={{ color: '#e0e0e0' }}>{email}</span>.
             Click the link in the email to activate your account.
           </p>
         </div>
+
+        {resent && (
+          <div
+            className="border px-3 py-2 mb-4 text-xs"
+            style={{ borderColor: '#2a2a2a', color: '#888' }}
+          >
+            ℹ️ You previously signed up with this email but never confirmed it.
+            A new confirmation link has been sent.
+          </div>
+        )}
 
         <p className="text-xs" style={{ color: '#555' }}>
           Didn&apos;t receive it? Check your spam folder.
@@ -204,7 +237,7 @@ export default function SignUpPage() {
           className="w-full text-xs uppercase tracking-widest border px-4 py-3 transition-colors cursor-pointer disabled:opacity-50"
           style={{ color: '#e05565', borderColor: '#e05565' }}
         >
-          {loading ? 'Creating account...' : 'Sign Up'}
+          {loading ? 'Please wait...' : 'Sign Up'}
         </button>
 
         <p className="text-xs text-center" style={{ color: '#888' }}>

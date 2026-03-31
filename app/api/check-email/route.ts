@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   const { email } = await request.json()
 
   if (!email) {
-    return NextResponse.json({ exists: false })
+    return NextResponse.json({ exists: false, verified: false })
   }
 
   const adminClient = createAdminClient(
@@ -22,12 +22,16 @@ export async function POST(request: Request) {
 
   const { data } = await adminClient.auth.admin.listUsers()
 
-  // Only count users who have confirmed their email
-  const exists = data?.users?.some(
-    (u) =>
-      u.email?.toLowerCase() === email.toLowerCase() &&
-      u.email_confirmed_at !== null
+  const user = data?.users?.find(
+    (u) => u.email?.toLowerCase() === email.toLowerCase()
   )
 
-  return NextResponse.json({ exists: !!exists })
+  if (!user) {
+    return NextResponse.json({ exists: false, verified: false })
+  }
+
+  return NextResponse.json({
+    exists: true,
+    verified: user.email_confirmed_at !== null,
+  })
 }
