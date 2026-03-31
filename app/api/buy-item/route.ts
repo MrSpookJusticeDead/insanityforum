@@ -33,10 +33,11 @@ export async function POST(request: Request) {
 
   // Check exclusive
   if (item.exclusive) {
-    if (item.exclusive_user_id !== user.id) {
-      return NextResponse.json({ error: 'This tag is exclusive and cannot be purchased' }, { status: 403 })
-    }
+  const allowedIds: string[] = item.exclusive_user_ids ?? []
+  if (!allowedIds.includes(user.id)) {
+    return NextResponse.json({ error: 'This tag is exclusive and cannot be purchased' }, { status: 403 })
   }
+}
 
   // Check if already owned
   const { data: existingItem } = await supabase
@@ -62,7 +63,8 @@ export async function POST(request: Request) {
   }
 
   // Check balance (exclusive dev tag is free)
-  const isFreeForOwner = item.exclusive && item.exclusive_user_id === user.id
+const isFreeForOwner = item.exclusive &&
+  (item.exclusive_user_ids ?? []).includes(user.id)
   if (!isFreeForOwner && profile.insanities < item.price) {
     return NextResponse.json({ error: 'Not enough Insanities' }, { status: 400 })
   }

@@ -15,7 +15,7 @@ interface ShopItem {
     bg_color: string
     price: number
     exclusive: boolean
-    exclusive_user_id: string | null
+    exclusive_user_ids: string[] | null  // ← was exclusive_user_id
 }
 
 interface ShopClientProps {
@@ -228,8 +228,8 @@ export default function ShopClient({ items, profile, ownedItemIds, userId }: Sho
                 {items.map((item) => {
                     const isOwned = owned.includes(item.id)
                     const isEquipped = equippedId === item.id
-                    const isExclusiveForMe = item.exclusive && item.exclusive_user_id === userId
-                    const isExclusiveForOther = item.exclusive && item.exclusive_user_id !== userId
+                    const isExclusiveForMe = item.exclusive && (item.exclusive_user_ids?.includes(userId ?? '') ?? false)
+                    const isExclusiveForOther = item.exclusive && !isExclusiveForMe
                     const canAfford = balance >= item.price
                     const isFree = item.price === 0
 
