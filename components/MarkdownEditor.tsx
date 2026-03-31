@@ -164,7 +164,7 @@ export default function MarkdownEditor({ value, onChange, placeholder }: Markdow
       return
     }
     const url = await uploadFile(file)
-    // ✅ Auto-insert at max post size (800px), no prompt
+    // ✅ Auto-insert at max post size (800px ), no prompt
     if (url) insertAtCursor(`\n[video:${file.name} =800](${url})\n`, '', '')
     if (videoInputRef.current) videoInputRef.current.value = ''
   }
