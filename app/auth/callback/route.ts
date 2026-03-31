@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   const supabase = await createClient()
 
-  // Handle token_hash flow (from email confirmation links)
+  // Handle token_hash flow (email confirmation + password recovery)
   if (token_hash && type) {
     const { error, data } = await supabase.auth.verifyOtp({
       token_hash,
@@ -21,10 +21,14 @@ export async function GET(request: Request) {
     })
 
     if (!error && data.user) {
-      // Generate a cryptographically secure one-time token
+      // ✅ Password recovery — redirect straight to password reset page
+      if (type === 'recovery') {
+        return NextResponse.redirect(`${origin}/password-reset`)
+      }
+
+      // ✅ Signup confirmation — use one-time token flow
       const oneTimeToken = randomBytes(32).toString('hex')
 
-      // Store it server-side using admin client (bypasses RLS)
       const adminClient = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -40,10 +44,9 @@ export async function GET(request: Request) {
         user_id: data.user.id,
         token: oneTimeToken,
         used: false,
-        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 min
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
       })
 
-      // Redirect to /confirmed with the token in the URL
       return NextResponse.redirect(
         `${origin}/confirmed?token=${oneTimeToken}`
       )

@@ -26,21 +26,29 @@ export default function SettingsPage() {
   const [userId, setUserId] = useState<string>('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+
+  // ✅ Separate loading states for each section
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
   const [pageLoading, setPageLoading] = useState(true)
-  const [message, setMessage] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+
+  // ✅ Separate message states for each section
+  const [profileMessage, setProfileMessage] = useState<string | null>(null)
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [tagMessage, setTagMessage] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleteText, setDeleteText] = useState('')
-
   const [ownedTags, setOwnedTags] = useState<OwnedTag[]>([])
-
   const [equippedTagId, setEquippedTagId] = useState<string | null>(null)
   const [tagLoading, setTagLoading] = useState<string | null>(null)
 
   const router = useRouter()
-  const supabase = createClient() // back to normal
-
+  const supabase = createClient()
 
   useEffect(() => {
     async function loadProfile() {
@@ -49,49 +57,49 @@ export default function SettingsPage() {
 
       setUserId(user.id)
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+      // ✅ Single profile fetch + tags in parallel
+      const [profileRes, tagsRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('username, bio, avatar_url, equipped_tag_id')
+          .eq('id', user.id)
+          .single(),
+        supabase
+          .from('user_items')
+          .select('item_id, shop_items(id, name, label, text_color, bg_color)')
+          .eq('user_id', user.id),
+      ])
 
-      const { data: tags } = await supabase
-        .from('user_items')
-        .select('item_id, shop_items(id, name, label, text_color, bg_color)')
-        .eq('user_id', user.id)
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('equipped_tag_id')
-        .eq('id', user.id)
-        .single()
-
-
-      if (profile) {
-        setUsername(profile.username || '')
-        setBio(profile.bio || '')
-        setAvatarUrl(profile.avatar_url || null)
+      if (profileRes.data) {
+        setUsername(profileRes.data.username || '')
+        setBio(profileRes.data.bio || '')
+        setAvatarUrl(profileRes.data.avatar_url || null)
+        setEquippedTagId(profileRes.data.equipped_tag_id)
       }
+
+      if (tagsRes.data) {
+        setOwnedTags(tagsRes.data as unknown as OwnedTag[])
+      }
+
       setPageLoading(false)
-
-      if (tags) setOwnedTags(tags as unknown as OwnedTag[])
-
-      if (profileData) setEquippedTagId(profileData.equipped_tag_id)
     }
     loadProfile()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleEquipTag = async (itemId: string | null) => {
     setTagLoading(itemId ?? 'unequip')
+    setTagMessage(null)
+
     const res = await fetch('/api/equip-tag', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ itemId }),
     })
+
     if (res.ok) {
       setEquippedTagId(itemId)
-      setMessage(itemId ? 'Tag equipped!' : 'Tag unequipped!')
+      setTagMessage(itemId ? 'Tag equipped!' : 'Tag unequipped!')
       router.refresh()
     }
     setTagLoading(null)
@@ -99,88 +107,78 @@ export default function SettingsPage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
-    setMessage(null)
+    setProfileLoading(true)
+    setProfileError(null)
+    setProfileMessage(null)
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
     const { error } = await supabase
       .from('profiles')
-      .update({
-        username,
-        bio,
-      })
+      .update({ username, bio })
       .eq('id', user.id)
 
     if (error) {
-      setError(error.message)
+      setProfileError(error.message)
     } else {
-      setMessage('Profile updated successfully')
+      setProfileMessage('Profile updated successfully!')
       router.refresh()
     }
-    setLoading(false)
+    setProfileLoading(false)
   }
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
-    setMessage(null)
+    setPasswordLoading(true)
+    setPasswordError(null)
+    setPasswordMessage(null)
 
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match')
-      setLoading(false)
+      setPasswordError('Passwords do not match.')
+      setPasswordLoading(false)
       return
     }
 
     if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters')
-      setLoading(false)
+      setPasswordError('Password must be at least 6 characters.')
+      setPasswordLoading(false)
       return
     }
 
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    })
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
 
     if (error) {
-      setError(error.message)
+      setPasswordError(error.message)
     } else {
-      setMessage('Password updated successfully')
+      setPasswordMessage('Password updated successfully!')
       setNewPassword('')
       setConfirmPassword('')
     }
-    setLoading(false)
+    setPasswordLoading(false)
   }
 
   const handleDeleteAccount = async () => {
     if (deleteText !== 'DELETE') return
-
-    setLoading(true)
-    setError(null)
+    setDeleteLoading(true)
+    setDeleteError(null)
 
     try {
-      const res = await fetch('/api/delete-account', {
-        method: 'DELETE',
-      })
-
+      const res = await fetch('/api/delete-account', { method: 'DELETE' })
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || 'Failed to delete account')
-        setLoading(false)
+        setDeleteError(data.error || 'Failed to delete account')
+        setDeleteLoading(false)
         return
       }
 
-      // Sign out locally after server deleted the auth user
       await supabase.auth.signOut()
       router.push('/')
       router.refresh()
     } catch {
-      setError('Something went wrong')
-      setLoading(false)
+      setDeleteError('Something went wrong')
+      setDeleteLoading(false)
     }
   }
 
@@ -194,38 +192,17 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-lg mx-auto">
-      {/* Back link */}
       <BackButton fallbackHref="/profile" fallbackLabel="Back" />
-      
+
       <h1 className="text-xl font-bold mb-6" style={{ color: '#e0e0e0' }}>
         Account Settings
       </h1>
 
-      {/* Messages */}
-      {message && (
-        <div
-          className="text-xs border px-3 py-2 mb-6"
-          style={{ color: '#5ec269', borderColor: '#5ec269' }}
-        >
-          {message}
-        </div>
-      )}
-      {error && (
-        <div
-          className="text-xs border px-3 py-2 mb-6"
-          style={{ color: '#e05565', borderColor: '#e05565' }}
-        >
-          {error}
-        </div>
-      )}
-
-      {/* ===== AVATAR SECTION ===== */}
+      {/* ===== AVATAR ===== */}
       <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
-
       <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e0e0e0' }}>
         Avatar
       </h2>
-
       <div className="mb-8">
         <AvatarUpload
           currentUrl={avatarUrl}
@@ -234,19 +211,27 @@ export default function SettingsPage() {
         />
       </div>
 
-      {/* ===== PROFILE SECTION ===== */}
+      {/* ===== PROFILE ===== */}
       <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
-
       <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e0e0e0' }}>
         Profile
       </h2>
 
+      {/* ✅ Profile-specific messages */}
+      {profileMessage && (
+        <div className="text-xs border px-3 py-2 mb-4" style={{ color: '#5ec269', borderColor: '#5ec269' }}>
+          {profileMessage}
+        </div>
+      )}
+      {profileError && (
+        <div className="text-xs border px-3 py-2 mb-4" style={{ color: '#e05565', borderColor: '#e05565' }}>
+          {profileError}
+        </div>
+      )}
+
       <form onSubmit={handleUpdateProfile} className="space-y-4 mb-8">
         <div>
-          <label
-            className="block text-xs uppercase tracking-widest mb-2"
-            style={{ color: '#888' }}
-          >
+          <label className="block text-xs uppercase tracking-widest mb-2" style={{ color: '#888' }}>
             Username
           </label>
           <input
@@ -257,12 +242,8 @@ export default function SettingsPage() {
             className="w-full px-3 py-2 text-sm"
           />
         </div>
-
         <div>
-          <label
-            className="block text-xs uppercase tracking-widest mb-2"
-            style={{ color: '#888' }}
-          >
+          <label className="block text-xs uppercase tracking-widest mb-2" style={{ color: '#888' }}>
             Bio
           </label>
           <textarea
@@ -273,30 +254,37 @@ export default function SettingsPage() {
             placeholder="Tell us about yourself..."
           />
         </div>
-
         <button
           type="submit"
-          disabled={loading}
+          disabled={profileLoading}
           className="text-xs uppercase tracking-widest border px-4 py-2 cursor-pointer disabled:opacity-50"
           style={{ color: '#5ec269', borderColor: '#5ec269' }}
         >
-          {loading ? 'Saving...' : 'Save Profile'}
+          {profileLoading ? 'Saving...' : 'Save Profile'}
         </button>
       </form>
 
-      {/* ===== PASSWORD SECTION ===== */}
+      {/* ===== PASSWORD ===== */}
       <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
-
       <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e0e0e0' }}>
         Change Password
       </h2>
 
+      {/* ✅ Password-specific messages */}
+      {passwordMessage && (
+        <div className="text-xs border px-3 py-2 mb-4" style={{ color: '#5ec269', borderColor: '#5ec269' }}>
+          {passwordMessage}
+        </div>
+      )}
+      {passwordError && (
+        <div className="text-xs border px-3 py-2 mb-4" style={{ color: '#e05565', borderColor: '#e05565' }}>
+          {passwordError}
+        </div>
+      )}
+
       <form onSubmit={handleChangePassword} className="space-y-4 mb-8">
         <div>
-          <label
-            className="block text-xs uppercase tracking-widest mb-2"
-            style={{ color: '#888' }}
-          >
+          <label className="block text-xs uppercase tracking-widest mb-2" style={{ color: '#888' }}>
             New Password
           </label>
           <input
@@ -309,12 +297,8 @@ export default function SettingsPage() {
             minLength={6}
           />
         </div>
-
         <div>
-          <label
-            className="block text-xs uppercase tracking-widest mb-2"
-            style={{ color: '#888' }}
-          >
+          <label className="block text-xs uppercase tracking-widest mb-2" style={{ color: '#888' }}>
             Confirm New Password
           </label>
           <input
@@ -327,23 +311,28 @@ export default function SettingsPage() {
             minLength={6}
           />
         </div>
-
         <button
           type="submit"
-          disabled={loading}
+          disabled={passwordLoading}
           className="text-xs uppercase tracking-widest border px-4 py-2 cursor-pointer disabled:opacity-50"
           style={{ color: '#e05565', borderColor: '#e05565' }}
         >
-          {loading ? 'Updating...' : 'Update Password'}
+          {passwordLoading ? 'Updating...' : 'Update Password'}
         </button>
       </form>
 
-      {/* ===== TAG SECTION ===== */}
+      {/* ===== TAGS ===== */}
       <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
-
       <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e0e0e0' }}>
         Equipped Tag
       </h2>
+
+      {/* ✅ Tag-specific message */}
+      {tagMessage && (
+        <div className="text-xs border px-3 py-2 mb-4" style={{ color: '#5ec269', borderColor: '#5ec269' }}>
+          {tagMessage}
+        </div>
+      )}
 
       {ownedTags.length === 0 ? (
         <p className="text-xs mb-8" style={{ color: '#555' }}>
@@ -403,10 +392,16 @@ export default function SettingsPage() {
 
       {/* ===== DANGER ZONE ===== */}
       <hr style={{ borderColor: '#2a2a2a' }} className="mb-6" />
-
       <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: '#e05565' }}>
         Danger Zone
       </h2>
+
+      {/* ✅ Delete-specific error */}
+      {deleteError && (
+        <div className="text-xs border px-3 py-2 mb-4" style={{ color: '#e05565', borderColor: '#e05565' }}>
+          {deleteError}
+        </div>
+      )}
 
       {!deleteConfirm ? (
         <button
@@ -417,10 +412,7 @@ export default function SettingsPage() {
           Delete Account
         </button>
       ) : (
-        <div
-          className="border p-4 space-y-3"
-          style={{ borderColor: '#e05565' }}
-        >
+        <div className="border p-4 space-y-3" style={{ borderColor: '#e05565' }}>
           <p className="text-xs" style={{ color: '#e05565' }}>
             This action is irreversible. All your posts, comments, and data will be deleted.
           </p>
@@ -437,11 +429,11 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={handleDeleteAccount}
-              disabled={deleteText !== 'DELETE' || loading}
+              disabled={deleteText !== 'DELETE' || deleteLoading}
               className="text-xs uppercase tracking-widest border px-4 py-2 cursor-pointer disabled:opacity-30"
               style={{ color: '#e05565', borderColor: '#e05565' }}
             >
-              {loading ? 'Deleting...' : 'Confirm Delete'}
+              {deleteLoading ? 'Deleting...' : 'Confirm Delete'}
             </button>
             <button
               onClick={() => {

@@ -258,6 +258,14 @@ export default function SignUpPage() {
             Log in
           </Link>
         </p>
+
+          {/*  Forgot password */}
+        <p className="text-xs text-center" style={{ color: '#555' }}>
+          Forgot your password?{' '}
+          <Link href="/login" className="hover:underline" style={{ color: '#555' }}>
+            Reset it here
+          </Link>
+        </p>
       </form>
     </div>
   )
