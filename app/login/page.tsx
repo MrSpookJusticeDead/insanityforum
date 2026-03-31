@@ -19,6 +19,13 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
+    const { data: { user: existingUser } } = await supabase.auth.getUser()
+    if (existingUser) {
+      router.push('/')
+      router.refresh()
+      return
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -27,8 +34,8 @@ export default function LoginPage() {
     if (error) {
       // Map Supabase error messages to friendly ones
       if (error.message.toLowerCase().includes('invalid login credentials') ||
-          error.message.toLowerCase().includes('invalid credentials') ||
-          error.message.toLowerCase().includes('wrong password')) {
+        error.message.toLowerCase().includes('invalid credentials') ||
+        error.message.toLowerCase().includes('wrong password')) {
         setError('Incorrect email or password.')
       } else if (error.message.toLowerCase().includes('email not confirmed')) {
         setError('Please confirm your email before logging in. Check your inbox.')

@@ -3,6 +3,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function SignUpPage() {
@@ -13,12 +14,21 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [resent, setResent] = useState(false)
+  const router = useRouter()
   const supabase = createClient()
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+
+    // Check if already logged in
+    const { data: { user: existingUser } } = await supabase.auth.getUser()
+    if (existingUser) {
+      router.push('/')
+      router.refresh()
+      return
+    }
 
     // Check if username is already taken
     const { data: existingUsername } = await supabase
